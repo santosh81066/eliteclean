@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme applied to the Android Window while the process is starting (Splash Screen) -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <!-- Set the background color for the splash screen -->
+        <item name="android:windowBackground">@drawable/splash</item>
+        <!-- Optionally, if you want to control fullscreen, uncomment this -->
+        <!-- <item name="android:windowFullscreen">true</item> -->
+    </style>
+
+    <!-- Theme applied to the Android Window once Flutter starts -->
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <!-- Ensure that the background matches your Flutter UI's background color -->
+        <item name="android:windowBackground">@android:color/white</item> <!-- Replace with your Flutter UI background color -->
+    </style>
+</resources>
