@@ -11,7 +11,9 @@ class SelectPackage extends StatefulWidget {
 class _SelectPackageState extends State<SelectPackage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   DateTime? _selectedDate;
-  final _dateController = TextEditingController();
+  TimeOfDay? _selectedTime;
+  final _dateTimeController = TextEditingController();
+  final _noteController = TextEditingController(); // Controller for the note section
 
   @override
   void initState() {
@@ -20,8 +22,8 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
     _tabController = TabController(length: 2, vsync: this);
   }
 
-  Future<void> _pickDate(BuildContext context) async {
-    // Open the date picker
+  Future<void> _pickDateTime(BuildContext context) async {
+    // First, pick the date
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -30,18 +32,37 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
     );
 
     if (pickedDate != null) {
-      // If a date is selected, update the controller and state
-      setState(() {
-        _selectedDate = pickedDate;
-        _dateController.text = DateFormat('yMMMd').format(pickedDate);
-      });
+      // Then, pick the time
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+
+      if (pickedTime != null) {
+        // Both date and time are selected, update the controller and state
+        setState(() {
+          _selectedDate = pickedDate;
+          _selectedTime = pickedTime;
+          // Format the combined date and time
+          _dateTimeController.text = DateFormat('yMMMd').format(pickedDate) +
+              ' - ' +
+              pickedTime.format(context);
+        });
+      } else {
+        // If the user did not pick a time, clear the selected date
+        setState(() {
+          _selectedDate = null;
+          _dateTimeController.clear();
+        });
+      }
     }
   }
 
   @override
   void dispose() {
     _tabController.dispose(); // Properly dispose of the TabController
-    _dateController.dispose(); // Dispose of the date controller
+    _dateTimeController.dispose(); // Dispose of the date controller
+    _noteController.dispose(); // Dispose of the note controller
     super.dispose();
   }
 
@@ -87,7 +108,7 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                       border: Border.all(
                         color: _tabController.index == 0
                             ? const Color(0xFFFF66B3)
-                            : Colors.transparent
+                            : Colors.transparent,
                       ),
                     ),
                     child: const Text(
@@ -144,9 +165,9 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
               ),
             ),
             const SizedBox(height: 16),
-            // Date Picker Field
+            // Date and Time Picker Field
             Text(
-              'Start Date',
+              'Start Date & Time',
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -155,45 +176,109 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
             ),
             const SizedBox(height: 8),
             GestureDetector(
-              onTap: () => _pickDate(context), // Call date picker on tap
+              onTap: () => _pickDateTime(context), // Call date & time picker on tap
               child: AbsorbPointer(
                 child: TextFormField(
-                  controller: _dateController,
+                  controller: _dateTimeController,
                   decoration: InputDecoration(
-                    hintText: 'Select Date',
-                    hintStyle: TextStyle(
+                    hintText: 'Select Date & Time',
+                    hintStyle: const TextStyle(
                       color: Color(0xFFB8B8D2),
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                     ),
                     contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Color(0xFFD2D2D2),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Color(0xFF583EF2),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Color(0xFFD2D2D2),
-                      ),
-                    ),
-                    suffixIcon: Icon(
+                    prefixIcon: const Icon(
                       Icons.calendar_today,
                       color: Color(0xFF9191B2),
+                    ),
+                    // Change underline color
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFB8B8D2)),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFB8B8D2)),
                     ),
                   ),
                 ),
               ),
             ),
+            
+            // Cost per Day Section
             const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F3FC),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cost per day per 1 washroom is',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      Text(
+                        'Total number of washrooms and app cost will be\ncalculated at the end.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w300,
+                          color: Color(0xFF5E5D5D),
+                        ),
+                      ),
+                      Text(
+                        '\$5',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+             const SizedBox(height: 16),
+                    Text(
+              'Note',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF38385E),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _noteController,
+              decoration: InputDecoration(
+                hintText: 'Eg: Bathroom needs harder clean',
+                hintStyle: const TextStyle(
+                  color: Color(0xFFB8B8D2),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                // Change underline color for note field
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFFB8B8D2)),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFFB8B8D2)),
+                ),
+              ),
+              maxLines: 3,
+            ),
+          
             const Spacer(),
             ElevatedButton(
               onPressed: () {
