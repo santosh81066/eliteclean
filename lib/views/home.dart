@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/topSection.dart';
+
 class Home extends StatelessWidget {
   const Home({super.key});
 
@@ -10,207 +12,162 @@ class Home extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
+      body: Column(
         children: [
-          Container(
-            width: screenWidth,
-            height: screenHeight * 0.35,
-            decoration: BoxDecoration(
-              color: const Color(0xFF6D6BE7),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(45),
-                bottomRight: Radius.circular(45),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 50.0, left: 20, right: 20),
+          TopSection(screenWidth: screenWidth, screenHeight: screenHeight),
+
+          // Main content section (Your Packages and Services)
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'My location',
+                  const Text(
+                    'Your Packages',
                     style: TextStyle(
-                      color: Color(0xFFB0BCE7),
-                      fontSize: 12,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Barcelona, Spain',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.menu, color: Colors.white),
-                        onPressed: () {},
-                      )
-                    ],
-                  ),
-                  SizedBox(height: 40),
-                  Text(
-                    'Hi Saim,',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
+                      color: Color(0xFF1E116B),
+                      fontSize: 20,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Text(
-                    'Need some help today?',
+                  const SizedBox(height: 10),
+                  Container(
+                    width: screenWidth,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Column(
+                      
+                      children: [
+                        
+                        const Text(
+                          'Your packages appear here',
+                          style: TextStyle(
+                            color: Color(0xFF808080),
+                            fontSize: 14,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                         const SizedBox(height: 10),
+                        Image.asset(
+                          'public/images/emptyservice.png', // Replace with your image asset path
+                          height: 80,
+                          width: 80,
+                        ),
+                       
+                        const SizedBox(height: 10),
+                        const Text(
+                          'No package subscribes yet...',
+                          style: TextStyle(
+                            color: Color(0xFF808080),
+                            fontSize: 12,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  const Text(
+                    'Select the service and choose the \nnumber of washrooms you want cleaned.',
                     style: TextStyle(
-                      color: Color(0xFFF8F8FA),
+                      color: Color(0xFF6D6BE7),
                       fontSize: 16,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w400,
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Services',
+                    style: TextStyle(
+                      color: Color(0xFF1E116B),
+                      fontSize: 20,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                
+                  // Services in GridView
+                  GridView.count(
+                    shrinkWrap: true,
+                    crossAxisCount: 2, // Number of columns
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 3 / 4, // Adjust the aspect ratio
+                    physics: const NeverScrollableScrollPhysics(), // Disable scrolling inside the grid
+                    children: List.generate(1, (index) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(context, '/servicedetail');
+                        },
+                        child: Card(
+                          color: const Color(0xFFEAE9FF),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          elevation: 2,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: Image.asset(
+                                  'public/images/bathroom.png', // Replace with your image asset path
+                                  height: 130,
+                                  width: 130,
+                                ),
+                              ),
+                              const Text(
+                                'Bathroom Cleaning',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Color(0xFF38385E),
+                                  fontSize: 14,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
                   ),
                 ],
               ),
             ),
           ),
-          Positioned(
-            top: screenHeight * 0.3,
-            left: 20,
-            right: 20,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Your Packages',
-                  style: TextStyle(
-                    color: Color(0xFF1E116B),
-                    fontSize: 20,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 10),
-                Container(
-                  width: screenWidth,
-                  padding: EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: Column(
-                    children: [
-                      Image.asset(
-                        'assets/box.png', // Replace with your image asset path
-                        height: 80,
-                        width: 80,
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        'Your packages appear here',
-                        style: TextStyle(
-                          color: Color(0xFF808080),
-                          fontSize: 14,
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        'No package subscribes yet...',
-                        style: TextStyle(
-                          color: Color(0xFF808080),
-                          fontSize: 12,
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 30),
-                Text(
-                  'Select the service and choose the \nnumber of washrooms you want cleaned.',
-                  style: TextStyle(
-                    color: Color(0xFF6D6BE7),
-                    fontSize: 16,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                SizedBox(height: 20),
-                Text(
-                  'Services',
-                  style: TextStyle(
-                    color: Color(0xFF1E116B),
-                    fontSize: 20,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        elevation: 2,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: Image.asset(
-                                'assets/bathroom.png', // Replace with your image asset path
-                                height: 80,
-                                width: 80,
-                              ),
-                            ),
-                            Text(
-                              'Bathroom Cleaning',
-                              style: TextStyle(
-                                color: Color(0xFF38385E),
-                                fontSize: 14,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
         ],
       ),
+
+      // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         type: BottomNavigationBarType.fixed,
         elevation: 15,
-        selectedItemColor: Color(0xFF583EF2),
-        unselectedItemColor: Color(0xFF77779D),
+        selectedItemColor: const Color(0xFF583EF2),
+        unselectedItemColor: const Color(0xFF77779D),
         items: [
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: 'Bookings',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'Settings',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
             label: 'Notification',
           ),
@@ -219,3 +176,4 @@ class Home extends StatelessWidget {
     );
   }
 }
+

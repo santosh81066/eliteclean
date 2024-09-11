@@ -1,6 +1,8 @@
 import 'package:eliteclean/views/home.dart';
 import 'package:eliteclean/views/loginpage.dart';
 import 'package:eliteclean/views/otp.dart';
+import 'package:eliteclean/views/selectpackage.dart';
+import 'package:eliteclean/views/servicedetai.dart';
 import 'package:flutter/material.dart';
 
 
@@ -23,10 +25,12 @@ class MyApp extends StatelessWidget {
       // Define the initial route and the routes in the app
       initialRoute: '/',
       routes: {
-        '/': (context) => Splashscreen(),  // Splashscreen as the initial screen
+        '/': (context) => Login(),  // Splashscreen as the initial screen
         '/login': (context) => Login(),
         '/verify': (context) => Verify(), // otp route
               '/home': (context) => Home(), // otp route
+     '/servicedetail': (context) => ServiceDetails(), // otp route
+     '/selectpackage': (context) => SelectPackage(), // otp route
 
       },
     );
