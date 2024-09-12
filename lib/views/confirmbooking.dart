@@ -4,26 +4,21 @@ class ConfirmBookingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Confirm Bookings",
+          style: TextStyle(
+            fontSize: 16,
+            color: Color(0xff1F126B),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(
             children: [
-              SizedBox(height: 50),
-              Row(
-                children: [
-                  Icon(Icons.arrow_back, size: 24, color: Color(0xFF583EF2)),
-                  SizedBox(width: 8),
-                  Text(
-                    "Confirm your booking",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E116B),
-                    ),
-                  ),
-                ],
-              ),
               SizedBox(height: 20),
               Card(
                 elevation: 2,
@@ -40,7 +35,8 @@ class ConfirmBookingScreen extends StatelessWidget {
                       _buildHeaderRow("Booking detail", Icons.edit),
                       SizedBox(height: 10),
                       _buildDetailItem("Package selected", "Select a package"),
-                      _buildDetailItem("Working time", "Monday - 22 Mar 2021\n12:30 PM"),
+                      _buildDetailItem(
+                          "Working time", "Monday - 22 Mar 2021\n12:30 PM"),
                       _buildDetailItem("Location", "House 1"),
                       _buildLocationDetail(),
                       _buildDetailItem("Note", "No note added"),
@@ -66,7 +62,11 @@ class ConfirmBookingScreen extends StatelessWidget {
                       SizedBox(height: 10),
                       _buildDetailItem("Payment method", "Credit card"),
                       SizedBox(height: 10),
-                      Text("Charges", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF38385E))),
+                      Text("Charges",
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF38385E))),
                       SizedBox(height: 10),
                       _buildChargeRow("Per 1 washroom", "\$10"),
                       _buildChargeRow("Per 1 day", "\$2"),
@@ -78,7 +78,7 @@ class ConfirmBookingScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 20),
-              _buildBottomBar(),
+              _buildBottomBar(context),
             ],
           ),
         ),
@@ -109,7 +109,10 @@ class ConfirmBookingScreen extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF38385E)),
+          style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF38385E)),
         ),
         SizedBox(height: 5),
         Text(
@@ -146,13 +149,17 @@ class ConfirmBookingScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(fontSize: 14, color: Color(0xFF77779D))),
-          Text(amount, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6D6BE7))),
+          Text(amount,
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF6D6BE7))),
         ],
       ),
     );
   }
 
-  Widget _buildBottomBar() {
+  Widget _buildBottomBar(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -179,11 +186,14 @@ class ConfirmBookingScreen extends StatelessWidget {
             ],
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(context, '/bookingpayment');
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF583EF2),
               padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
             child: Text(
               "Book now",
