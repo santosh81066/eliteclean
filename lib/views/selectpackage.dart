@@ -408,7 +408,7 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  // Navigate to next screen
+                Navigator.pushNamed(context, '/confirmbooking');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF583EF2),

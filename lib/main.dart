@@ -1,3 +1,4 @@
+import 'package:eliteclean/views/confirmbooking.dart';
 import 'package:eliteclean/views/home.dart';
 import 'package:eliteclean/views/loginpage.dart';
 import 'package:eliteclean/views/otp.dart';
@@ -30,7 +31,8 @@ class MyApp extends StatelessWidget {
         '/verify': (context) => Verify(), // otp route
               '/home': (context) => Home(), // otp route
      '/servicedetail': (context) => ServiceDetails(), // otp route
-     '/selectpackage': (context) => SelectPackage(), // otp route
+     '/selectpackage': (context) => SelectPackage(),
+      '/confirmbooking': (context) => ConfirmBookingScreen(), // otp route
 
       },
     );
