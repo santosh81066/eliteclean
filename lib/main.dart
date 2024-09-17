@@ -2,6 +2,7 @@ import 'package:eliteclean/views/confirmbooking.dart';
 import 'package:eliteclean/views/home.dart';
 import 'package:eliteclean/views/loginpage.dart';
 import 'package:eliteclean/views/otp.dart';
+import 'package:eliteclean/views/pendingbookings.dart';
 import 'package:eliteclean/views/selectpackage.dart';
 import 'package:eliteclean/views/servicedetai.dart';
 import 'package:flutter/material.dart';
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
      '/servicedetail': (context) => ServiceDetails(), // otp route
      '/selectpackage': (context) => SelectPackage(),
       '/confirmbooking': (context) => ConfirmBookingScreen(), // otp route
-
+'/pendingbooking': (context) => PendingBookingScreen(),
       },
     );
   }

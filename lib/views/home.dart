@@ -1,18 +1,63 @@
 import 'package:flutter/material.dart';
 
 import '../widgets/topSection.dart';
+import 'bookings.dart';
 
-class Home extends StatelessWidget {
+class Home extends StatefulWidget {
   const Home({super.key});
 
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+   int _selectedIndex = 0; 
+      void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+      // Handle navigation logic here for each index if required
+    });
+  }
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
+   
+  final List<Widget> _pages = [
+    // Home Page
+   Home(),
+    // Bookings Page
+    BookingScreen(),
+    // Settings Page
+    Column(
+      children: const [
+        Text(
+          'Settings Page',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    ),
+    // Notifications Page
+    Column(
+      children: const [
+        Text(
+          'Notifications Page',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    ),
+  ];
 
-    return Scaffold(
+    return  Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
+      body:_selectedIndex == 0 
+            ? Column(
         children: [
           TopSection(screenWidth: screenWidth, screenHeight: screenHeight),
 
@@ -145,29 +190,31 @@ class Home extends StatelessWidget {
             ),
           ),
         ],
-      ),
+      ): _pages.elementAt(_selectedIndex),
 
       // Bottom Navigation Bar
-      bottomNavigationBar: BottomNavigationBar(
+       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         type: BottomNavigationBarType.fixed,
         elevation: 15,
         selectedItemColor: const Color(0xFF583EF2),
         unselectedItemColor: const Color(0xFF77779D),
-        items: [
-          const BottomNavigationBarItem(
+        currentIndex: _selectedIndex, // Set the currently selected index
+        onTap: _onItemTapped, // Update selected index when a tab is tapped
+        items: const [
+          BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
           ),
-          const BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: 'Bookings',
           ),
-          const BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'Settings',
           ),
-          const BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
             label: 'Notification',
           ),

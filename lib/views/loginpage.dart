@@ -67,33 +67,7 @@ class Login extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // "Your name" label and input field
-                        Text(
-                          'Your name',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F1F39),
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(Icons.person_outline, color: Color(0xFFB8B8D2)),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                decoration: InputDecoration(
-                                  hintText: 'your name here',
-                                  border: InputBorder.none,
-                                  hintStyle: TextStyle(color: Color(0xFFB8B8D2)),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Divider(),
-
-                        // "Phone number" label and input field
+                                               // "Phone number" label and input field
                         Text(
                           'Phone number',
                           style: TextStyle(
