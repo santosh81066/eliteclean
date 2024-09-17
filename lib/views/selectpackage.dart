@@ -8,12 +8,14 @@ class SelectPackage extends StatefulWidget {
   State<SelectPackage> createState() => _SelectPackageState();
 }
 
-class _SelectPackageState extends State<SelectPackage> with SingleTickerProviderStateMixin {
+class _SelectPackageState extends State<SelectPackage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   final _dateTimeController = TextEditingController();
-  final _noteController = TextEditingController(); // Controller for the note section
+  final _noteController =
+      TextEditingController(); // Controller for the note section
   int _selectedMonthIndex = 0;
   int _selectedUseIndex = 0; // For selecting months
 
@@ -78,7 +80,9 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF583EF2).withOpacity(0.5) : Colors.white,
+              color: isSelected
+                  ? const Color(0xFF583EF2).withOpacity(0.5)
+                  : Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFF583EF2)),
             ),
@@ -114,7 +118,9 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF583EF2).withOpacity(0.5) : Colors.white,
+              color: isSelected
+                  ? const Color(0xFF583EF2).withOpacity(0.5)
+                  : Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFF583EF2)),
             ),
@@ -147,7 +153,8 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: SingleChildScrollView( // Added scrolling here
+      body: SingleChildScrollView(
+        // Added scrolling here
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -155,6 +162,7 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
             children: [
               // TabBar Section
               TabBar(
+                dividerColor: Colors.transparent,
                 controller: _tabController,
                 indicator: BoxDecoration(
                   color: const Color(0xFFFFDFF5),
@@ -163,7 +171,8 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 tabs: [
                   Tab(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 35),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 35),
                       decoration: BoxDecoration(
                         color: _tabController.index == 0
                             ? const Color(0xFFFFDFF5)
@@ -192,7 +201,8 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                   ),
                   Tab(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 35),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 35),
                       decoration: BoxDecoration(
                         color: _tabController.index == 1
                             ? const Color(0xFFFFDFF5)
@@ -225,12 +235,13 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 },
               ),
               const SizedBox(height: 16),
-              
+
               // Package description
               Container(
                 width: MediaQuery.of(context).size.width * 0.9,
                 height: 81,
-                padding: const EdgeInsets.only(top: 13, left: 21, right: 20, bottom: 14),
+                padding: const EdgeInsets.only(
+                    top: 13, left: 21, right: 20, bottom: 14),
                 decoration: ShapeDecoration(
                   shape: RoundedRectangleBorder(
                     side: const BorderSide(width: 1, color: Color(0xFFEAE9FF)),
@@ -258,12 +269,29 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Months selection (only visible if "Monthly" is selected)
-              if (_tabController.index == 1) const SizedBox(
-                width: 311,
-                child: Text(
-                  'Select no.of months',
+              if (_tabController.index == 1)
+                const SizedBox(
+                  width: 311,
+                  child: Text(
+                    'Select no.of months',
+                    style: TextStyle(
+                      color: Color(0xFF1F1F39),
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              if (_tabController.index == 1) const SizedBox(height: 16),
+              if (_tabController.index == 1) _buildSelectableMonths(),
+              const SizedBox(height: 16),
+
+              // Uses selection
+              if (_tabController.index == 1)
+                const Text(
+                  'No.of uses',
                   style: TextStyle(
                     color: Color(0xFF1F1F39),
                     fontSize: 14,
@@ -271,25 +299,10 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-             if (_tabController.index == 1) const SizedBox(height: 16),
-              if (_tabController.index == 1) _buildSelectableMonths(),
-              const SizedBox(height: 16),
-              
-              // Uses selection
-              if (_tabController.index == 1) const Text(
-                'No.of uses',
-                style: TextStyle(
-                  color: Color(0xFF1F1F39),
-                  fontSize: 14,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-          if (_tabController.index == 1)    const SizedBox(height: 16),
+              if (_tabController.index == 1) const SizedBox(height: 16),
               if (_tabController.index == 1) _buildSelectableUses(),
-            if (_tabController.index == 1)  const SizedBox(height: 16),
-              
+              if (_tabController.index == 1) const SizedBox(height: 16),
+
               // Date and Time Picker Field
               const Text(
                 'Start Date & Time',
@@ -312,7 +325,8 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                       ),
-                      contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       prefixIcon: Icon(
                         Icons.calendar_today,
                         color: Color(0xFF9191B2),
@@ -328,10 +342,11 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Cost section
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3F3FC),
                   borderRadius: BorderRadius.circular(12),
@@ -373,7 +388,7 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Note section
               const Text(
                 'Note',
@@ -393,7 +408,8 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                   ),
-                  contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Color(0xFFB8B8D2)),
                   ),
@@ -403,12 +419,12 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 ),
                 maxLines: 3,
               ),
-              
+
               // Next button
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                Navigator.pushNamed(context, '/confirmbooking');
+                  Navigator.pushNamed(context, '/confirmbooking');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF583EF2),
@@ -420,7 +436,10 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 child: const Center(
                   child: Text(
                     'Next',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                 ),
               ),
