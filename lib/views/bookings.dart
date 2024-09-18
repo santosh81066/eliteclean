@@ -36,6 +36,7 @@ class BookingScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.white, // Set the background color of the Scaffold body
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           backgroundColor: Colors.white, // Ensure AppBar background is also white
           iconTheme: IconThemeData(color: Colors.black), // AppBar icon color
           title: Text(
