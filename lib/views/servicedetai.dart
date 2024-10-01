@@ -10,15 +10,10 @@ class ServiceDetails extends StatefulWidget {
 }
 
 class _ServiceDetailsState extends State<ServiceDetails> {
-  int _selectedIndex = 0; // Index of the selected item
+  // Index of the selected item
   int washroomCount = 1; // Initial count for washrooms
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      // Handle navigation logic here for each index if required
-    });
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -279,31 +274,7 @@ class _ServiceDetailsState extends State<ServiceDetails> {
       ),
 
       // Bottom Navigation Bar
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.book),
-            label: 'Bookings',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifications',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF6D6BE7), // Color for selected icon
-        unselectedItemColor: const Color(0xFFB8B8D2), // Color for unselected icons
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-      ),
+     
     );
   }
 }
