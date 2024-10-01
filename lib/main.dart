@@ -2,25 +2,15 @@ import 'package:eliteclean/views/confirmbooking.dart';
 import 'package:eliteclean/views/home.dart';
 import 'package:eliteclean/views/loginpage.dart';
 import 'package:eliteclean/views/otp.dart';
+import 'package:eliteclean/views/pendingbookings.dart';
 import 'package:eliteclean/views/selectpackage.dart';
 import 'package:eliteclean/views/servicedetai.dart';
 import 'package:flutter/material.dart';
+
 import 'views/splashscreen.dart'; // Import your LoginPage widget
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 
-// Import your LoginPage widget
-void main() async {
-  // Ensure that widget binding is initialized
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  runApp(ProviderScope(child: MyApp()));
+void main() {
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -43,6 +33,7 @@ class MyApp extends StatelessWidget {
         '/servicedetail': (context) => ServiceDetails(), // otp route
         '/selectpackage': (context) => SelectPackage(),
         '/confirmbooking': (context) => ConfirmBookingScreen(), // otp route
+        '/pendingbooking': (context) => PendingBookingScreen(),
       },
     );
   }

@@ -63,7 +63,9 @@ class PendingBookingScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity, // Set width to double.infinity to make the button full width
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.of(context).pushNamed('/viewbooking');
+                },
                 child: Text(
                   'View',
                   style: TextStyle(
