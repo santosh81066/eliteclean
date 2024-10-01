@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "20489709155",
+    "project_id": "eliteclean-51568",
+    "storage_bucket": "eliteclean-51568.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:20489709155:android:38a1cfe404524e78ddfa56",
+        "android_client_info": {
+          "package_name": "com.example.eliteclean"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2eRP4MFwBni-C_czV_ojcU4FuDVXTm0o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:20489709155:android:5769ab17ac4d3409ddfa56",
+        "android_client_info": {
+          "package_name": "com.example.eliteclean_cleaner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2eRP4MFwBni-C_czV_ojcU4FuDVXTm0o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
