@@ -1,21 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong2/latlong.dart';
+import '../providers/locationnotifier.dart';
+import '../providers/textfieldnotifier.dart';
 
-class SelectPackage extends StatefulWidget {
+class SelectPackage extends ConsumerStatefulWidget {
   const SelectPackage({super.key});
 
   @override
-  State<SelectPackage> createState() => _SelectPackageState();
+  ConsumerState<SelectPackage> createState() => _SelectPackageState();
 }
 
-class _SelectPackageState extends State<SelectPackage> with SingleTickerProviderStateMixin {
+class _SelectPackageState extends ConsumerState<SelectPackage>
+    with SingleTickerProviderStateMixin {
+  MapController mapController = MapController();
   late TabController _tabController;
+  bool mapIsMoving = false;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   final _dateTimeController = TextEditingController();
-  final _noteController = TextEditingController(); // Controller for the note section
+  final _noteController =
+      TextEditingController(); // Controller for the note section
   int _selectedMonthIndex = 0;
-  int _selectedUseIndex = 0; // For selecting months
+  int _selectedUseIndex = 0;
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -59,6 +69,7 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
     _tabController.dispose();
     _dateTimeController.dispose();
     _noteController.dispose();
+    mapController.dispose();
     super.dispose();
   }
 
@@ -78,7 +89,9 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF583EF2).withOpacity(0.5) : Colors.white,
+              color: isSelected
+                  ? const Color(0xFF583EF2).withOpacity(0.5)
+                  : Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFF583EF2)),
             ),
@@ -114,7 +127,9 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF583EF2).withOpacity(0.5) : Colors.white,
+              color: isSelected
+                  ? const Color(0xFF583EF2).withOpacity(0.5)
+                  : Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFF583EF2)),
             ),
@@ -136,6 +151,12 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final locationState = ref.watch(locationProvider);
+    final textState = ref.watch(textFieldProvider);
+    MapController mapController = MapController();
+    if (locationState.address != null && _searchController.text.isEmpty) {
+      _searchController.text = locationState.address!;
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Select a Package'),
@@ -147,7 +168,7 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: SingleChildScrollView( // Added scrolling here
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -163,7 +184,8 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 tabs: [
                   Tab(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 35),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 35),
                       decoration: BoxDecoration(
                         color: _tabController.index == 0
                             ? const Color(0xFFFFDFF5)
@@ -192,7 +214,8 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                   ),
                   Tab(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 35),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 35),
                       decoration: BoxDecoration(
                         color: _tabController.index == 1
                             ? const Color(0xFFFFDFF5)
@@ -225,12 +248,13 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 },
               ),
               const SizedBox(height: 16),
-              
+
               // Package description
               Container(
                 width: MediaQuery.of(context).size.width * 0.9,
                 height: 81,
-                padding: const EdgeInsets.only(top: 13, left: 21, right: 20, bottom: 14),
+                padding: const EdgeInsets.only(
+                    top: 13, left: 21, right: 20, bottom: 14),
                 decoration: ShapeDecoration(
                   shape: RoundedRectangleBorder(
                     side: const BorderSide(width: 1, color: Color(0xFFEAE9FF)),
@@ -258,12 +282,29 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Months selection (only visible if "Monthly" is selected)
-              if (_tabController.index == 1) const SizedBox(
-                width: 311,
-                child: Text(
-                  'Select no.of months',
+              if (_tabController.index == 1)
+                const SizedBox(
+                  width: 311,
+                  child: Text(
+                    'Select no.of months',
+                    style: TextStyle(
+                      color: Color(0xFF1F1F39),
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              if (_tabController.index == 1) const SizedBox(height: 16),
+              if (_tabController.index == 1) _buildSelectableMonths(),
+              const SizedBox(height: 16),
+
+              // Uses selection
+              if (_tabController.index == 1)
+                const Text(
+                  'No.of uses',
                   style: TextStyle(
                     color: Color(0xFF1F1F39),
                     fontSize: 14,
@@ -271,25 +312,10 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-             if (_tabController.index == 1) const SizedBox(height: 16),
-              if (_tabController.index == 1) _buildSelectableMonths(),
-              const SizedBox(height: 16),
-              
-              // Uses selection
-              if (_tabController.index == 1) const Text(
-                'No.of uses',
-                style: TextStyle(
-                  color: Color(0xFF1F1F39),
-                  fontSize: 14,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-          if (_tabController.index == 1)    const SizedBox(height: 16),
+              if (_tabController.index == 1) const SizedBox(height: 16),
               if (_tabController.index == 1) _buildSelectableUses(),
-            if (_tabController.index == 1)  const SizedBox(height: 16),
-              
+              const SizedBox(height: 16),
+
               // Date and Time Picker Field
               const Text(
                 'Start Date & Time',
@@ -312,7 +338,8 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                       ),
-                      contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       prefixIcon: Icon(
                         Icons.calendar_today,
                         color: Color(0xFF9191B2),
@@ -328,10 +355,286 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 ),
               ),
               const SizedBox(height: 16),
-              
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.5,
+                    height: MediaQuery.of(context).size.height * 0.06,
+                    decoration: ShapeDecoration(
+                      color: const Color(0xFFF3F3FC),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: GestureDetector(
+                      onTap: () {
+                        print("add address tapped");
+
+                        if (locationState.currentPosition != null) {
+                          // Open the dialog and listen for changes in locationState using a Consumer
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return Consumer(
+                                builder: (context, ref, child) {
+                                  // Re-read the locationState inside the dialog
+                                  final locationState =
+                                      ref.watch(locationProvider);
+                                  LatLng selectedLocation =
+                                      locationState.currentPosition!;
+
+                                  return AlertDialog(
+                                    contentPadding: EdgeInsets
+                                        .zero, // Remove default padding
+                                    content: SizedBox(
+                                      width: double.maxFinite,
+                                      height: 400, // Adjust height for the map
+                                      child: Stack(
+                                        children: [
+                                          // Search field positioned at the top
+                                          Positioned(
+                                            top: 10,
+                                            left: 10,
+                                            right: 10,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withOpacity(0.1),
+                                                    blurRadius: 5,
+                                                    spreadRadius: 1,
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: TextField(
+                                                  onChanged: (text) {
+                                                    // Update Riverpod's state
+                                                    ref
+                                                        .read(textFieldProvider
+                                                            .notifier)
+                                                        .updateText(text);
+                                                  },
+                                                  controller: _searchController,
+                                                  decoration: InputDecoration(
+                                                    contentPadding:
+                                                        EdgeInsets.symmetric(
+                                                            vertical: 10,
+                                                            horizontal: 16),
+                                                    hintText:
+                                                        'Search for a location',
+                                                    filled: true,
+                                                    fillColor: Colors.white,
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                      borderSide:
+                                                          BorderSide.none,
+                                                    ),
+                                                    suffixIcon: textState == ''
+                                                        ? IconButton(
+                                                            icon: const Icon(
+                                                                Icons.clear),
+                                                            onPressed: () {
+                                                              _searchController
+                                                                  .clear();
+                                                              ref
+                                                                  .read(locationProvider
+                                                                      .notifier)
+                                                                  .clearaddress();
+                                                              // Clear Riverpod's state
+                                                              ref
+                                                                  .read(textFieldProvider
+                                                                      .notifier)
+                                                                  .clearText();
+                                                            },
+                                                          )
+                                                        : const Icon(
+                                                            Icons.search),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          // Map layer below the search bar
+                                          Positioned(
+                                            top:
+                                                60, // Adjust this to ensure the search bar is not blocked by the map
+                                            left: 0,
+                                            right: 0,
+                                            bottom:
+                                                60, // Add space for the Confirm button
+                                            child: FlutterMap(
+                                              mapController: mapController,
+                                              options: MapOptions(
+                                                initialCenter: selectedLocation,
+                                                initialZoom: 15,
+                                                minZoom:
+                                                    5, // Set min zoom level
+                                                maxZoom: 18,
+                                                onTap: (_, latLng) {
+                                                  // Update the current location in Riverpod's state when tapped
+                                                  ref
+                                                      .read(locationProvider
+                                                          .notifier)
+                                                      .setCurrentLocation(
+                                                          latLng);
+                                                  print(
+                                                      "on tap change address: ${latLng.latitude}, ${latLng.longitude}");
+                                                },
+                                              ),
+                                              children: [
+                                                TileLayer(
+                                                  urlTemplate:
+                                                      'https://mts1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+                                                  subdomains: [
+                                                    'mt0',
+                                                    'mt1',
+                                                    'mt2',
+                                                    'mt3'
+                                                  ],
+                                                ),
+                                                MarkerLayer(
+                                                  markers: [
+                                                    Marker(
+                                                      point: selectedLocation,
+                                                      child: const Icon(
+                                                        Icons.location_pin,
+                                                        color: Colors.red,
+                                                        size: 40.0,
+                                                      ),
+                                                      rotate: true,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          // Address and Confirm button
+                                          Positioned(
+                                            bottom: 0,
+                                            left: 0,
+                                            right: 0,
+                                            child: Column(
+                                              children: [
+                                                Padding(
+                                                  padding: const EdgeInsets.all(
+                                                      16.0),
+                                                  child: SizedBox(
+                                                    width: double.infinity,
+                                                    child: ElevatedButton(
+                                                      onPressed: () {
+                                                        Navigator.of(context)
+                                                            .pop(); // Close the dialog
+                                                      },
+                                                      style: ElevatedButton
+                                                          .styleFrom(
+                                                        backgroundColor: Colors
+                                                            .green, // Button background color
+                                                        padding: const EdgeInsets
+                                                            .symmetric(
+                                                            vertical:
+                                                                16.0), // Button height
+                                                      ),
+                                                      child: const Text(
+                                                        'Confirm',
+                                                        style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize:
+                                                                16), // Text styling
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        } else {
+                          // If currentPosition is null, show an error or loading indicator
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Location not found'),
+                                content: const Center(
+                                  child: Text(
+                                      'Unable to fetch location. Please try again.'),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .pop(); // Close the dialog
+                                    },
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF583EF2),
+                                  width: 2,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.add,
+                                color: Color(0xFF583EF2),
+                                size: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Flexible(
+                              child: Text(
+                                'Add another address',
+                                style: TextStyle(
+                                  color: Color(0xFF583EF2),
+                                  fontSize: 14,
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               // Cost section
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3F3FC),
                   borderRadius: BorderRadius.circular(12),
@@ -373,7 +676,7 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Note section
               const Text(
                 'Note',
@@ -393,7 +696,8 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                   ),
-                  contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Color(0xFFB8B8D2)),
                   ),
@@ -403,12 +707,12 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 ),
                 maxLines: 3,
               ),
-              
+
               // Next button
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                Navigator.pushNamed(context, '/confirmbooking');
+                  Navigator.pushNamed(context, '/confirmbooking');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF583EF2),
@@ -420,7 +724,10 @@ class _SelectPackageState extends State<SelectPackage> with SingleTickerProvider
                 child: const Center(
                   child: Text(
                     'Next',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                 ),
               ),

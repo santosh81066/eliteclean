@@ -13,8 +13,6 @@ class _ServiceDetailsState extends State<ServiceDetails> {
   // Index of the selected item
   int washroomCount = 1; // Initial count for washrooms
 
-
-
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -53,7 +51,8 @@ class _ServiceDetailsState extends State<ServiceDetails> {
                           width: 122,
                           height: 160,
                           decoration: BoxDecoration(
-                            border: Border.all(color: Color(0xFF6D6BE7), width: 1),
+                            border:
+                                Border.all(color: Color(0xFF6D6BE7), width: 1),
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(2),
                               topRight: Radius.circular(15),
@@ -86,7 +85,9 @@ class _ServiceDetailsState extends State<ServiceDetails> {
                           ),
                         ),
 
-                        const SizedBox(width: 16), // Spacing between the service and the counter
+                        const SizedBox(
+                            width:
+                                16), // Spacing between the service and the counter
 
                         // Counter Buttons
                         Container(
@@ -94,7 +95,8 @@ class _ServiceDetailsState extends State<ServiceDetails> {
                           height: 160,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
-                            color: const Color(0xB5F0F0F0), // Reverted background
+                            color:
+                                const Color(0xB5F0F0F0), // Reverted background
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -115,7 +117,8 @@ class _ServiceDetailsState extends State<ServiceDetails> {
                                 width: 54,
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF583EF2), // Background color for the number
+                                  color: const Color(
+                                      0xFF583EF2), // Background color for the number
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Center(
@@ -249,7 +252,11 @@ class _ServiceDetailsState extends State<ServiceDetails> {
                 height: 46,
                 child: ElevatedButton(
                   onPressed: () {
-          Navigator.pushNamed(context, '/selectpackage');
+                    Navigator.pushNamed(
+                      context,
+                      '/selectpackage',
+                      arguments: {'washroomCount': washroomCount},
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF583EF2),
@@ -274,7 +281,6 @@ class _ServiceDetailsState extends State<ServiceDetails> {
       ),
 
       // Bottom Navigation Bar
-     
     );
   }
 }

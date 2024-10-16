@@ -1,11 +1,33 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:async'; // For using Future.delayed
 
-class Login extends StatelessWidget {
+import '../providers/auth.dart';
+import '../providers/loader.dart';
+
+class Login extends StatefulWidget {
+  const Login({super.key});
+
+  @override
+  State<Login> createState() => _LoginState();
+}
+
+class _LoginState extends State<Login> {
+  TextEditingController _controller = TextEditingController();
+  String? _errorText; // To store error message for phone number validation
+
+  // Validation function
+  bool validatePhoneNumber(String number) {
+    // Simple regex for validating a 10-digit Indian phone number
+    RegExp regExp = RegExp(r'^[6-9]\d{9}$');
+    return regExp.hasMatch(number);
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -13,18 +35,19 @@ class Login extends StatelessWidget {
         child: Center(
           child: Column(
             children: [
-              SizedBox(height: screenHeight * 0.1), // Space from top to the logo
+              SizedBox(
+                  height: screenHeight * 0.1), // Space from top to the logo
 
               // Logo at the top
               SvgPicture.asset(
-                      'public/images/logo-icon.svg', // Path to your SVG file
-                      fit: BoxFit.contain, // Adjust fit as needed
-                    ),
+                'public/images/logo-icon.svg', // Path to your SVG file
+                fit: BoxFit.contain, // Adjust fit as needed
+              ),
 
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // "Sign up" text
-              Text(
+              const Text(
                 'Sign up',
                 style: TextStyle(
                   fontSize: 24,
@@ -32,11 +55,11 @@ class Login extends StatelessWidget {
                   color: Color(0xFF1E116B),
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
 
               // Subtext
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 40),
                 child: Text(
                   'Please enter your details to sign up and create an account.',
                   textAlign: TextAlign.center,
@@ -46,7 +69,7 @@ class Login extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
 
               // Form container (expanded towards the bottom)
               Container(
@@ -56,19 +79,17 @@ class Login extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(25),
-                  border: Border.all(color: Color(0xFFEAE9FF)),
+                  border: Border.all(color: const Color(0xFFEAE9FF)),
                 ),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align the button at the bottom
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Form fields
+                    const SizedBox(height: 25),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // "Your name" label and input field
-                                               // "Phone number" label and input field
-                        Text(
+                        const Text(
                           'Phone number',
                           style: TextStyle(
                             fontSize: 12,
@@ -76,50 +97,98 @@ class Login extends StatelessWidget {
                             color: Color(0xFF1F1F39),
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.phone_outlined, color: Color(0xFFB8B8D2)),
-                            SizedBox(width: 8),
+                            const Icon(Icons.phone_outlined,
+                                color: Color(0xFFB8B8D2)),
+                            const SizedBox(width: 8),
+                            const Text(
+                              "+91 ",
+                              style: TextStyle(fontSize: 16),
+                            ),
                             Expanded(
                               child: TextField(
+                                controller: _controller,
                                 keyboardType: TextInputType.phone,
-                                decoration: InputDecoration(
+                                decoration: const InputDecoration(
                                   hintText: 'your phone number here',
                                   border: InputBorder.none,
-                                  hintStyle: TextStyle(color: Color(0xFFB8B8D2)),
+                                  hintStyle:
+                                      TextStyle(color: Color(0xFFB8B8D2)),
+                                  // Display error message
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        Divider(),
-
+                        const Divider(),
+                        if (_errorText != null)
+                          Text(
+                            _errorText!,
+                            style: TextStyle(color: Colors.red),
+                          ),
                       ],
                     ),
+                    const SizedBox(height: 60),
 
                     // "Next" button aligned at the bottom and full width
-                    SizedBox(
-                      width: double.infinity, // Makes the button take full width
-                      child: ElevatedButton(
-                        onPressed: () {
-                      Navigator.pushNamed(context, '/verify');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: Color(0xFF583EF2),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                    Consumer(
+                      builder:
+                          (BuildContext context, WidgetRef ref, Widget? child) {
+                        var loader = ref.watch(loadingProvider);
+
+                        return SizedBox(
+                          width: double
+                              .infinity, // Makes the button take full width
+                          child: ElevatedButton(
+                            onPressed: loader == true
+                                ? () {} // Disable interaction but keep the style
+                                : () {
+                                    String phoneNumber =
+                                        _controller.text.trim();
+
+                                    // Validate phone number
+                                    if (validatePhoneNumber(phoneNumber)) {
+                                      setState(() {
+                                        _errorText =
+                                            null; // Clear error message
+                                      });
+
+                                      // Trigger phone authentication
+                                      ref.read(authProvider.notifier).phoneAuth(
+                                            context,
+                                            "+91$phoneNumber",
+                                            ref,
+                                          );
+                                    } else {
+                                      setState(() {
+                                        _errorText =
+                                            "Please enter a valid 10-digit phone number";
+                                      });
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              backgroundColor: const Color(0xFF583EF2),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: loader == true
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : const Text(
+                                    'Next',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
-                        ),
-                        child: Text(
-                          'Next',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white, // Set text color to white
-                          ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ],
                 ),
