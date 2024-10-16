@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async'; // For using Future.delayed
 
@@ -38,14 +37,9 @@ class _LoginState extends State<Login> {
             children: [
               SizedBox(
                   height: screenHeight * 0.1), // Space from top to the logo
-              SizedBox(
-                  height: screenHeight * 0.1), // Space from top to the logo
 
               // Logo at the top
               SvgPicture.asset(
-                'public/images/logo-icon.svg', // Path to your SVG file
-                fit: BoxFit.contain, // Adjust fit as needed
-              ),
                 'public/images/logo-icon.svg', // Path to your SVG file
                 fit: BoxFit.contain, // Adjust fit as needed
               ),
@@ -92,11 +86,9 @@ class _LoginState extends State<Login> {
                   children: [
                     // Form fields
                     const SizedBox(height: 25),
-                    const SizedBox(height: 25),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
                         const Text(
                           'Phone number',
                           style: TextStyle(
@@ -105,7 +97,6 @@ class _LoginState extends State<Login> {
                             color: Color(0xFF1F1F39),
                           ),
                         ),
-                        const SizedBox(height: 8),
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -119,9 +110,7 @@ class _LoginState extends State<Login> {
                             Expanded(
                               child: TextField(
                                 controller: _controller,
-                                controller: _controller,
                                 keyboardType: TextInputType.phone,
-                                decoration: const InputDecoration(
                                 decoration: const InputDecoration(
                                   hintText: 'your phone number here',
                                   border: InputBorder.none,
@@ -141,7 +130,6 @@ class _LoginState extends State<Login> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 60),
                     const SizedBox(height: 60),
 
                     // "Next" button aligned at the bottom and full width
