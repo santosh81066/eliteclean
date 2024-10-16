@@ -9,14 +9,14 @@ class BookingScreen extends StatelessWidget {
       "location": "Room 123, Brooklyn St, Kepler District",
       "name": "Ali Raza"
     },
-     {
+    {
       "bookingNo": "#12KL23",
       "date": "13 Mar 2021",
       "time": "12:30 PM",
       "location": "Room 123, Brooklyn St, Kepler District",
       "name": "Ali Raza"
     },
-     {
+    {
       "bookingNo": "#12KL23",
       "date": "13 Mar 2021",
       "time": "12:30 PM",
@@ -34,10 +34,11 @@ class BookingScreen extends StatelessWidget {
     return DefaultTabController(
       length: 2, // Number of tabs
       child: Scaffold(
-        backgroundColor: Colors.white, // Set the background color of the Scaffold body
+        backgroundColor:
+            Colors.white, // Set the background color of the Scaffold body
         appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: Colors.white, // Ensure AppBar background is also white
+          backgroundColor:
+              Colors.white, // Ensure AppBar background is also white
           iconTheme: IconThemeData(color: Colors.black), // AppBar icon color
           title: Text(
             'Bookings',
@@ -64,39 +65,46 @@ class BookingScreen extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                           PopupMenuButton<String>(
+                          PopupMenuButton<String>(
                             offset: Offset(0, 30),
                             color: Colors.white,
                             icon: Icon(Icons.more_horiz, color: Colors.black),
-                            shape: RoundedRectangleBorder( borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(8), // Custom radius for bottom left
-                                bottomRight: Radius.circular(8), // Custom radius for bottom right
-                              ),),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(
+                                    8), // Custom radius for bottom left
+                                bottomRight: Radius.circular(
+                                    8), // Custom radius for bottom right
+                              ),
+                            ),
                             onSelected: (String result) {
                               switch (result) {
                                 case 'Pending Bookings':
-                                Navigator.of(context).pushNamed('/pendingbooking');
+                                  Navigator.of(context)
+                                      .pushNamed('/pendingbooking');
                                   // Handle edit action
                                   break;
-                               
                               }
                             },
-                            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                            itemBuilder: (BuildContext context) =>
+                                <PopupMenuEntry<String>>[
                               const PopupMenuItem<String>(
                                 value: 'Pending Bookings',
                                 child: Text('Pending Bookings'),
                               ),
-                             
                             ],
                           ), // Three dots icon
                         ],
                       ),
-                      SizedBox(height: 10), // Space between the row and the main container
+                      SizedBox(
+                          height:
+                              10), // Space between the row and the main container
                       Container(
                         width: containerWidth,
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          border: Border.all(color: Color(0xFFEAE9FF), width: 1),
+                          border:
+                              Border.all(color: Color(0xFFEAE9FF), width: 1),
                           borderRadius: BorderRadius.all(Radius.circular(3)),
                         ),
                         child: Padding(
@@ -169,7 +177,8 @@ class BookingScreen extends StatelessWidget {
                                 ),
                               ),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
                                 children: [
                                   TextButton(
                                     onPressed: () {},
@@ -223,7 +232,8 @@ class BookingScreen extends StatelessWidget {
                       ),
                       // Expanded inside a SingleChildScrollView to prevent overflow and layout issues
                       SizedBox(
-                        height: 300, // Specify a fixed height for the tab content area
+                        height:
+                            300, // Specify a fixed height for the tab content area
                         child: TabBarView(
                           children: [
                             ListView.builder(
@@ -238,7 +248,8 @@ class BookingScreen extends StatelessWidget {
                                   child: Padding(
                                     padding: const EdgeInsets.all(16.0),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Booking no ${bookings[index]["bookingNo"]}',
@@ -274,14 +285,17 @@ class BookingScreen extends StatelessWidget {
                                         ),
                                         SizedBox(height: 10),
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
                                           children: [
                                             TextButton(
                                               onPressed: () {},
                                               style: TextButton.styleFrom(
-                                                backgroundColor: Color(0xFFF3F3FC),
+                                                backgroundColor:
+                                                    Color(0xFFF3F3FC),
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(12),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
                                                 ),
                                               ),
                                               child: Text(
@@ -295,9 +309,11 @@ class BookingScreen extends StatelessWidget {
                                             TextButton(
                                               onPressed: () {},
                                               style: TextButton.styleFrom(
-                                                backgroundColor: Color(0xFFFFEAF0),
+                                                backgroundColor:
+                                                    Color(0xFFFFEAF0),
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(12),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
                                                 ),
                                               ),
                                               child: Text(

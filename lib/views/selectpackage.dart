@@ -23,6 +23,8 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
   final _dateTimeController = TextEditingController();
   final _noteController =
       TextEditingController(); // Controller for the note section
+  final _noteController =
+      TextEditingController(); // Controller for the note section
   int _selectedMonthIndex = 0;
   int _selectedUseIndex = 0;
   final _searchController = TextEditingController();
@@ -92,6 +94,9 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
               color: isSelected
                   ? const Color(0xFF583EF2).withOpacity(0.5)
                   : Colors.white,
+              color: isSelected
+                  ? const Color(0xFF583EF2).withOpacity(0.5)
+                  : Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFF583EF2)),
             ),
@@ -127,6 +132,9 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
+              color: isSelected
+                  ? const Color(0xFF583EF2).withOpacity(0.5)
+                  : Colors.white,
               color: isSelected
                   ? const Color(0xFF583EF2).withOpacity(0.5)
                   : Colors.white,
@@ -176,6 +184,7 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
             children: [
               // TabBar Section
               TabBar(
+                dividerColor: Colors.transparent,
                 controller: _tabController,
                 indicator: BoxDecoration(
                   color: const Color(0xFFFFDFF5),
@@ -184,6 +193,8 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                 tabs: [
                   Tab(
                     child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 35),
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 35),
                       decoration: BoxDecoration(
@@ -214,6 +225,8 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                   ),
                   Tab(
                     child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 35),
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 35),
                       decoration: BoxDecoration(
@@ -253,6 +266,8 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
               Container(
                 width: MediaQuery.of(context).size.width * 0.9,
                 height: 81,
+                padding: const EdgeInsets.only(
+                    top: 13, left: 21, right: 20, bottom: 14),
                 padding: const EdgeInsets.only(
                     top: 13, left: 21, right: 20, bottom: 14),
                 decoration: ShapeDecoration(
@@ -298,10 +313,35 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                   ),
                 ),
               if (_tabController.index == 1) const SizedBox(height: 16),
+              if (_tabController.index == 1)
+                const SizedBox(
+                  width: 311,
+                  child: Text(
+                    'Select no.of months',
+                    style: TextStyle(
+                      color: Color(0xFF1F1F39),
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              if (_tabController.index == 1) const SizedBox(height: 16),
               if (_tabController.index == 1) _buildSelectableMonths(),
               const SizedBox(height: 16),
 
               // Uses selection
+              if (_tabController.index == 1)
+                const Text(
+                  'No.of uses',
+                  style: TextStyle(
+                    color: Color(0xFF1F1F39),
+                    fontSize: 14,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              if (_tabController.index == 1) const SizedBox(height: 16),
               if (_tabController.index == 1)
                 const Text(
                   'No.of uses',
@@ -338,6 +378,8 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                       ),
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       contentPadding:
                           EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       prefixIcon: Icon(
@@ -635,6 +677,8 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
               Container(
                 padding:
                     const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3F3FC),
                   borderRadius: BorderRadius.circular(12),
@@ -698,6 +742,8 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                   ),
                   contentPadding:
                       EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Color(0xFFB8B8D2)),
                   ),
@@ -713,6 +759,7 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
               ElevatedButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/confirmbooking');
+                  Navigator.pushNamed(context, '/confirmbooking');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF583EF2),
@@ -724,6 +771,10 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                 child: const Center(
                   child: Text(
                     'Next',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                     style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
