@@ -153,6 +153,7 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
   @override
   Widget build(BuildContext context) {
     final locationState = ref.watch(locationProvider);
+    final locationNotifier = ref.read(locationProvider.notifier);
     final textState = ref.watch(textFieldProvider);
     MapController mapController = MapController();
     if (locationState.address != null && _searchController.text.isEmpty) {
@@ -559,8 +560,36 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                                                     width: double.infinity,
                                                     child: ElevatedButton(
                                                       onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop(); // Close the dialog
+                                                        // Hardcode the location ID (replace "12345" with your actual location ID)
+                                                        String locationId =
+                                                            '12345';
+
+                                                        // Check if current position and address are available
+                                                        if (locationState
+                                                                    .currentPosition !=
+                                                                null &&
+                                                            locationState
+                                                                    .address !=
+                                                                null) {
+                                                          // Call the method to upload location data to Realtime Database with the hardcoded ID
+                                                          locationNotifier
+                                                              .uploadLocationToRealtimeDB(
+                                                            locationId, // Hardcoded location ID
+                                                            locationState
+                                                                .currentPosition!, // Pass the current position
+                                                            locationState
+                                                                .address!, // Pass the address
+                                                          );
+                                                        } else {
+                                                          // Show error message if location or address is missing
+                                                          ScaffoldMessenger.of(
+                                                                  context)
+                                                              .showSnackBar(
+                                                            SnackBar(
+                                                                content: Text(
+                                                                    'Location or address is missing')),
+                                                          );
+                                                        }
                                                       },
                                                       style: ElevatedButton
                                                           .styleFrom(

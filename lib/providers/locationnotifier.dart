@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -63,7 +64,7 @@ class LocationNotifier extends StateNotifier<LocationState> {
     state = state.copyWith(address: null);
   }
 
-  // New method to set current location and fetch the address
+  // Method to set current location and fetch the address
   Future<void> setCurrentLocation(LatLng newPosition) async {
     try {
       state = state.copyWith(isLoading: true);
@@ -82,6 +83,44 @@ class LocationNotifier extends StateNotifier<LocationState> {
       state = state.copyWith(errorMessage: error.toString(), isLoading: false);
     }
   }
+
+  Future<void> uploadLocationToRealtimeDB(
+      String id, LatLng position, String address) async {
+    final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+
+    try {
+      // Append location data to the 'locations' list under the given ID
+      await dbRef.child('locations/$id/address_list').push().set({
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'address': address,
+        'time': DateTime.now().toIso8601String(),
+      });
+      print("Location added to list in Realtime Database");
+    } catch (e) {
+      print("Failed to upload location: $e");
+    }
+  }
+
+  // Future<void> uploadLocationToRealtimeDB(
+  //     LatLng position, String address) async {
+  //   final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+  //
+  //   try {
+  //     await dbRef.child('locations').push().set({
+  //       'location': {
+  //         'latitude': position.latitude,
+  //         'longitude': position.longitude,
+  //       },
+  //       'address': address,
+  //       'time': DateTime.now()
+  //           .toIso8601String(), // You can store time this way in Realtime DB
+  //     });
+  //     print("Location uploaded to Realtime Database");
+  //   } catch (e) {
+  //     print("Failed to upload location: $e");
+  //   }
+  // }
 
   // Function to get address from latitude and longitude using Google Places API
   Future<String> _getAddressFromLatLng(LatLng position) async {
