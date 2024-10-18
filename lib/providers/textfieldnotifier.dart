@@ -4,6 +4,7 @@ class TextFieldStateNotifier extends StateNotifier<String> {
   TextFieldStateNotifier() : super('');
 
   void updateText(String text) {
+    print('update text triggered');
     state = text;
   }
 

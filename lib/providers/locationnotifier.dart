@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -87,10 +88,10 @@ class LocationNotifier extends StateNotifier<LocationState> {
   Future<void> uploadLocationToRealtimeDB(
       String id, LatLng position, String address) async {
     final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
-
+    User? user = FirebaseAuth.instance.currentUser;
     try {
       // Append location data to the 'locations' list under the given ID
-      await dbRef.child('locations/$id/address_list').push().set({
+      await dbRef.child('${user!.uid}/address_list').push().set({
         'latitude': position.latitude,
         'longitude': position.longitude,
         'address': address,

@@ -1,3 +1,4 @@
+import 'package:eliteclean/providers/addressnotifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,10 +23,19 @@ class _HomeState extends ConsumerState<Home> {
   }
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    Future.microtask(() {
+      ref.read(addressProvider.notifier).getCurrentLocation();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
-    final locationState = ref.watch(locationProvider);
+
     final List<Widget> _pages = [
       // Home Page
       Home(),
