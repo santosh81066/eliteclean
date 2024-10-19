@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -81,6 +83,24 @@ class AddressNotifier extends StateNotifier<AddressState> {
           "State updated with location: $currentPosition and address: $address");
     } catch (error) {
       print("Error fetching location: $error");
+    }
+  }
+
+  Future<void> uploadLocationToRealtimeDB(
+      String id, double lattitude, double longitude, String address) async {
+    final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+    User? user = FirebaseAuth.instance.currentUser;
+    try {
+      // Append location data to the 'locations' list under the given ID
+      await dbRef.child('${user!.uid}/address_list').push().set({
+        'latitude': lattitude,
+        'longitude': longitude,
+        'address': address,
+        'time': DateTime.now().toIso8601String(),
+      });
+      print("Location added to list in Realtime Database");
+    } catch (e) {
+      print("Failed to upload location: $e");
     }
   }
 
