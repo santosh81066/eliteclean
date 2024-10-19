@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:eliteclean/models/addressstate.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +21,7 @@ class SelectPackage extends ConsumerStatefulWidget {
 
 class _SelectPackageState extends ConsumerState<SelectPackage>
     with SingleTickerProviderStateMixin {
+  int loCount = 0;
   MapController mapController = MapController();
   late TabController _tabController;
   bool mapIsMoving = false;
@@ -440,6 +443,89 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                   ),
                 ),
               ),
+
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    children: List.generate(
+                      loCount,
+                      (index) => // Change 10 to the number of items you want
+                          Container(
+                        margin: EdgeInsets.symmetric(horizontal: 5),
+                        width: 110,
+                        height: 130,
+                        padding: EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(
+                                2), // Top-left corner with radius 2
+                            topRight:
+                                Radius.circular(20), // Keep other corners at 20
+                            bottomLeft: Radius.circular(20),
+                            bottomRight: Radius.circular(20),
+                          ),
+                          border: Border.all(
+                            color: Color(0xff6E6BE8),
+                            width: 2,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              height: 50, // Adjust the size as needed
+                              child: Image.asset(
+                                'assets/images/Home.png', // Replace with your image path
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'House ${index + 1}', // Dynamic text
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Color(0xff6E6BE8),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  // Get the user ID from Firebase Authentication
+                  String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+                  // Ensure user ID is not empty before proceeding
+                  if (userId.isNotEmpty) {
+                    // Get the location count for the user ID
+                    int count = await getLocationCount(userId);
+
+                    // Update the state with the new location count
+                    setState(() {
+                      loCount = count;
+                    });
+
+                    // Display the count or use it in your app
+                    print("Total number of locations for user $userId: $count");
+                  } else {
+                    // Handle case where user is not authenticated
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('User is not authenticated.'),
+                      ),
+                    );
+                  }
+                },
+                child: Icon(Icons.refresh),
+              ),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -696,8 +782,37 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                                                       width: double.infinity,
                                                       child: ElevatedButton(
                                                         onPressed: () {
-                                                          Navigator.of(context)
-                                                              .pop(); // Close the dialog
+                                                          // Hardcode the location ID (replace "12345" with your actual location ID)
+                                                          String locationId =
+                                                              '';
+
+                                                          // Check if current position and address are available
+                                                          if (addressState
+                                                                  .selectedAddress !=
+                                                              null) {
+                                                            // Call the method to upload location data to Realtime Database with the hardcoded ID
+                                                            ref
+                                                                .read(addressProvider
+                                                                    .notifier)
+                                                                .uploadLocationToRealtimeDB(
+                                                                  locationId, // Hardcoded location ID
+                                                                  addressState
+                                                                      .latitude!,
+                                                                  addressState
+                                                                      .longitude!, // Pass the current position
+                                                                  addressState
+                                                                      .selectedAddress!, // Pass the address
+                                                                );
+                                                          } else {
+                                                            // Show error message if location or address is missing
+                                                            ScaffoldMessenger
+                                                                    .of(context)
+                                                                .showSnackBar(
+                                                              SnackBar(
+                                                                  content: Text(
+                                                                      'Location or address is missing')),
+                                                            );
+                                                          }
                                                         },
                                                         style: ElevatedButton
                                                             .styleFrom(
@@ -880,5 +995,31 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
         ),
       ),
     );
+  }
+
+  Future<int> getLocationCount(String locationId) async {
+    final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+    User? user = FirebaseAuth.instance.currentUser;
+    try {
+      // Get the data snapshot of the location_list under the specified id
+      DatabaseEvent event =
+          await dbRef.child('${user!.uid}/address_list').once();
+
+      // Check if the location_list exists and count the number of children (locations)
+      if (event.snapshot.exists) {
+        Map<dynamic, dynamic>? locations =
+            event.snapshot.value as Map<dynamic, dynamic>?;
+        int locationCount =
+            locations?.length ?? 0; // Get the number of items in the list
+        print("Number of location entries: $locationCount");
+        return locationCount;
+      } else {
+        print("No locations found for ID: ${user.uid}");
+        return 0; // No location_list exists
+      }
+    } catch (e) {
+      print("Failed to retrieve location count: $e");
+      return 0;
+    }
   }
 }

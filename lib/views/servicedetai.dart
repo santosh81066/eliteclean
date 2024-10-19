@@ -65,7 +65,7 @@ class _ServiceDetailsState extends State<ServiceDetails> {
                               Padding(
                                 padding: const EdgeInsets.only(top: 20.0),
                                 child: Image.asset(
-                                  'public/images/bathroom.png', // Replace with your image asset path
+                                  'assets/images/bathroom.png', // Replace with your image asset path
                                   height: 50,
                                   width: 50,
                                 ),

@@ -113,7 +113,7 @@ class _HomeState extends ConsumerState<Home> {
                               ),
                               const SizedBox(height: 10),
                               Image.asset(
-                                'public/images/emptyservice.png', // Replace with your image asset path
+                                'assets/images/emptyservice.png', // Replace with your image asset path
                                 height: 80,
                                 width: 80,
                               ),
@@ -177,7 +177,7 @@ class _HomeState extends ConsumerState<Home> {
                                     Padding(
                                       padding: const EdgeInsets.all(20.0),
                                       child: Image.asset(
-                                        'public/images/bathroom.png', // Replace with your image asset path
+                                        'assets/images/bathroom.png', // Replace with your image asset path
                                         height: 130,
                                         width: 130,
                                       ),
