@@ -503,9 +503,7 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                                 builder: (context, ref, child) {
                                   // Re-read the locationState inside the dialog
                                   final locationState =
-                                      ref.watch(locationProvider);
-                                  LatLng selectedLocation =
-                                      locationState.currentPosition!;
+                                      ref.watch(addressProvider);
 
                                   return AlertDialog(
                                     contentPadding: EdgeInsets
@@ -598,7 +596,9 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                                             child: FlutterMap(
                                               mapController: mapController,
                                               options: MapOptions(
-                                                initialCenter: selectedLocation,
+                                                initialCenter: LatLng(
+                                                    locationState.latitude!,
+                                                    locationState.longitude!),
                                                 initialZoom: 15,
                                                 minZoom:
                                                     5, // Set min zoom level
@@ -628,7 +628,11 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                                                 MarkerLayer(
                                                   markers: [
                                                     Marker(
-                                                      point: selectedLocation,
+                                                      point: LatLng(
+                                                          locationState
+                                                              .latitude!,
+                                                          locationState
+                                                              .longitude!),
                                                       child: const Icon(
                                                         Icons.location_pin,
                                                         color: Colors.red,
@@ -660,11 +664,8 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
 
                                                         // Check if current position and address are available
                                                         if (locationState
-                                                                    .currentPosition !=
-                                                                null &&
-                                                            locationState
-                                                                    .address !=
-                                                                null) {
+                                                                .selectedAddress !=
+                                                            null) {
                                                           // Call the method to upload location data to Realtime Database with the hardcoded ID
                                                           ref
                                                               .read(
