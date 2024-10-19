@@ -1,11 +1,12 @@
-import 'dart:async';
+// ignore_for_file: prefer_const_literals_to_create_immutables, unused_local_variable
 
-import 'package:eliteclean/models/addressstate.dart';
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import '../providers/addressnotifier.dart';
@@ -21,7 +22,8 @@ class SelectPackage extends ConsumerStatefulWidget {
 
 class _SelectPackageState extends ConsumerState<SelectPackage>
     with SingleTickerProviderStateMixin {
-  int loCount = 0;
+  DatabaseReference? _databaseRef;
+  User? user;
   MapController mapController = MapController();
   late TabController _tabController;
   bool mapIsMoving = false;
@@ -41,6 +43,7 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
   @override
   void initState() {
     super.initState();
+    _initializeUserAndDatabase();
     _tabController = TabController(length: 2, vsync: this);
     Future.microtask(() {
       ref
@@ -53,6 +56,22 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
         _searchController.text = ref.read(addressProvider).selectedAddress!;
       }
     });
+  }
+
+  Future<void> _initializeUserAndDatabase() async {
+    // Ensure user is authenticated and fetch the current user
+    user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      // Create the database reference dynamically based on user's UID
+      setState(() {
+        _databaseRef =
+            FirebaseDatabase.instance.ref('${user!.uid}/address_list');
+      });
+    } else {
+      // Handle the case where the user is not authenticated
+      print('User is not signed in.');
+    }
   }
 
   Future<void> _pickDateTime(BuildContext context) async {
@@ -73,9 +92,8 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
         setState(() {
           _selectedDate = pickedDate;
           _selectedTime = pickedTime;
-          _dateTimeController.text = DateFormat('yMMMd').format(pickedDate) +
-              ' - ' +
-              pickedTime.format(context);
+          _dateTimeController.text =
+              '${DateFormat('yMMMd').format(pickedDate)} - ${pickedTime.format(context)}';
         });
       } else {
         setState(() {
@@ -174,17 +192,34 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
     );
   }
 
-  void _onAddressChanged(String input, AddressNotifier addressNotifier) {
+  void _onAddressChanged(String input, AddressNotifier addressNotifier) async {
     print("_onAddressChanged triggered");
+
     if (_debounce?.isActive ?? false) _debounce?.cancel();
 
-    _debounce = Timer(const Duration(milliseconds: 500), () {
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
       if (input.isEmpty) {
         addressNotifier
             .clearSuggestions(); // Clear suggestions if input is empty
       } else {
-        addressNotifier.fetchAddressSuggestions(
-            input); // Fetch suggestions if input is not empty
+        try {
+          // Request location with new AndroidSettings, AppleSettings, or general LocationSettings
+          AndroidSettings androidSettings = AndroidSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 100,
+            forceLocationManager: true, // Optional
+          );
+
+          Position position = await Geolocator.getCurrentPosition(
+              locationSettings: androidSettings);
+
+          // Pass latitude and longitude to fetchAddressSuggestions
+          addressNotifier.fetchAddressSuggestions(
+              input, position.latitude, position.longitude);
+        } catch (e) {
+          print("Error getting location: $e");
+          // Optionally handle the error here
+        }
       }
     });
   }
@@ -219,7 +254,8 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
   @override
   Widget build(BuildContext context) {
     final locationState = ref.watch(locationProvider);
-
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
     MapController mapController = MapController();
 
     final addressNotifier = ref.read(addressProvider.notifier);
@@ -444,88 +480,88 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                 ),
               ),
 
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    children: List.generate(
-                      loCount,
-                      (index) => // Change 10 to the number of items you want
-                          Container(
-                        margin: EdgeInsets.symmetric(horizontal: 5),
-                        width: 110,
-                        height: 130,
-                        padding: EdgeInsets.all(16.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(
-                                2), // Top-left corner with radius 2
-                            topRight:
-                                Radius.circular(20), // Keep other corners at 20
-                            bottomLeft: Radius.circular(20),
-                            bottomRight: Radius.circular(20),
-                          ),
-                          border: Border.all(
-                            color: Color(0xff6E6BE8),
-                            width: 2,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              height: 50, // Adjust the size as needed
-                              child: Image.asset(
-                                'assets/images/Home.png', // Replace with your image path
-                                fit: BoxFit.contain,
+              _databaseRef == null
+                  ? Center(child: CircularProgressIndicator())
+                  : StreamBuilder(
+                      stream: _databaseRef!.onValue,
+                      builder:
+                          (context, AsyncSnapshot<DatabaseEvent> snapshot) {
+                        if (snapshot.hasData) {
+                          // Fetch the data from Firebase
+                          Map<dynamic, dynamic>? data = snapshot
+                              .data!.snapshot.value as Map<dynamic, dynamic>?;
+                          int loCount = data != null ? data.length : 0;
+
+                          if (loCount == 0) {
+                            return Center(
+                                child: Text('No addresses available.'));
+                          }
+
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              child: Row(
+                                children: List.generate(
+                                  loCount, // Number of containers based on Firebase data length
+                                  (index) => Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 5),
+                                    width: screenWidth * 0.25,
+                                    height: screenHeight * 0.15,
+                                    padding: const EdgeInsets.all(16.0),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(2),
+                                        topRight: Radius.circular(20),
+                                        bottomLeft: Radius.circular(20),
+                                        bottomRight: Radius.circular(20),
+                                      ),
+                                      border: Border.all(
+                                        color: const Color(0xff6E6BE8),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          height:
+                                              50, // Adjust the size as needed
+                                          child: Image.asset(
+                                            'assets/images/Home.png', // Replace with your image path
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'House ${index + 1}', // Dynamic text
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Color(0xff6E6BE8),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                            SizedBox(height: 16),
-                            Text(
-                              'House ${index + 1}', // Dynamic text
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Color(0xff6E6BE8),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                          );
+                        } else if (snapshot.hasError) {
+                          return Center(
+                              child: Text('Error: ${snapshot.error}'));
+                        } else {
+                          return Center(
+                              child: Container(
+                            height: screenHeight * 0.15,
+                          ));
+                        }
+                      },
                     ),
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  // Get the user ID from Firebase Authentication
-                  String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
-
-                  // Ensure user ID is not empty before proceeding
-                  if (userId.isNotEmpty) {
-                    // Get the location count for the user ID
-                    int count = await getLocationCount(userId);
-
-                    // Update the state with the new location count
-                    setState(() {
-                      loCount = count;
-                    });
-
-                    // Display the count or use it in your app
-                    print("Total number of locations for user $userId: $count");
-                  } else {
-                    // Handle case where user is not authenticated
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('User is not authenticated.'),
-                      ),
-                    );
-                  }
-                },
-                child: Icon(Icons.refresh),
-              ),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -606,7 +642,8 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                                                         _searchController,
                                                     decoration: InputDecoration(
                                                       contentPadding:
-                                                          EdgeInsets.symmetric(
+                                                          const EdgeInsets
+                                                              .symmetric(
                                                               vertical: 10,
                                                               horizontal: 16),
                                                       hintText:
@@ -803,15 +840,22 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                                                                   addressState
                                                                       .selectedAddress!, // Pass the address
                                                                 );
+
+                                                            // Close the AlertDialog after the action is performed
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
                                                           } else {
                                                             // Show error message if location or address is missing
                                                             ScaffoldMessenger
                                                                     .of(context)
                                                                 .showSnackBar(
-                                                              SnackBar(
-                                                                  content: Text(
-                                                                      'Location or address is missing')),
+                                                              const SnackBar(
+                                                                content: Text(
+                                                                    'Location or address is missing'),
+                                                              ),
                                                             );
+                                                            // Do not close the AlertDialog
                                                           }
                                                         },
                                                         style: ElevatedButton
@@ -995,31 +1039,5 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
         ),
       ),
     );
-  }
-
-  Future<int> getLocationCount(String locationId) async {
-    final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
-    User? user = FirebaseAuth.instance.currentUser;
-    try {
-      // Get the data snapshot of the location_list under the specified id
-      DatabaseEvent event =
-          await dbRef.child('${user!.uid}/address_list').once();
-
-      // Check if the location_list exists and count the number of children (locations)
-      if (event.snapshot.exists) {
-        Map<dynamic, dynamic>? locations =
-            event.snapshot.value as Map<dynamic, dynamic>?;
-        int locationCount =
-            locations?.length ?? 0; // Get the number of items in the list
-        print("Number of location entries: $locationCount");
-        return locationCount;
-      } else {
-        print("No locations found for ID: ${user.uid}");
-        return 0; // No location_list exists
-      }
-    } catch (e) {
-      print("Failed to retrieve location count: $e");
-      return 0;
-    }
   }
 }

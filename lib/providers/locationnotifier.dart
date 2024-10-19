@@ -85,39 +85,19 @@ class LocationNotifier extends StateNotifier<LocationState> {
     }
   }
 
-  Future<void> uploadLocationToRealtimeDB(
-      String id, LatLng position, String address) async {
-    final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
-    User? user = FirebaseAuth.instance.currentUser;
-    try {
-      // Append location data to the 'locations' list under the given ID
-      await dbRef.child('${user!.uid}/address_list').push().set({
-        'latitude': position.latitude,
-        'longitude': position.longitude,
-        'address': address,
-        'time': DateTime.now().toIso8601String(),
-      });
-      print("Location added to list in Realtime Database");
-    } catch (e) {
-      print("Failed to upload location: $e");
-    }
-  }
-
   // Future<void> uploadLocationToRealtimeDB(
-  //     LatLng position, String address) async {
+  //     String id, LatLng position, String address) async {
   //   final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
-  //
+  //   User? user = FirebaseAuth.instance.currentUser;
   //   try {
-  //     await dbRef.child('locations').push().set({
-  //       'location': {
-  //         'latitude': position.latitude,
-  //         'longitude': position.longitude,
-  //       },
+  //     // Append location data to the 'locations' list under the given ID
+  //     await dbRef.child('${user!.uid}/address_list').push().set({
+  //       'latitude': position.latitude,
+  //       'longitude': position.longitude,
   //       'address': address,
-  //       'time': DateTime.now()
-  //           .toIso8601String(), // You can store time this way in Realtime DB
+  //       'time': DateTime.now().toIso8601String(),
   //     });
-  //     print("Location uploaded to Realtime Database");
+  //     print("Location added to list in Realtime Database");
   //   } catch (e) {
   //     print("Failed to upload location: $e");
   //   }

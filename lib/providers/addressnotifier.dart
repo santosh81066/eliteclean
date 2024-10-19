@@ -86,24 +86,6 @@ class AddressNotifier extends StateNotifier<AddressState> {
     }
   }
 
-  Future<void> uploadLocationToRealtimeDB(
-      String id, double lattitude, double longitude, String address) async {
-    final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
-    User? user = FirebaseAuth.instance.currentUser;
-    try {
-      // Append location data to the 'locations' list under the given ID
-      await dbRef.child('${user!.uid}/address_list').push().set({
-        'latitude': lattitude,
-        'longitude': longitude,
-        'address': address,
-        'time': DateTime.now().toIso8601String(),
-      });
-      print("Location added to list in Realtime Database");
-    } catch (e) {
-      print("Failed to upload location: $e");
-    }
-  }
-
   Future<void> setCurrentLocation(LatLng newPosition) async {
     try {
       // Fetch the address based on the new position
@@ -169,22 +151,56 @@ class AddressNotifier extends StateNotifier<AddressState> {
   }
 
   // Fetch suggestions from Google Places API for the address
-  Future<void> fetchAddressSuggestions(String input) async {
-    print("fetchAddressSuggestions triggerd");
+  // Future<void> fetchAddressSuggestions(String input) async {
+  //   print("fetchAddressSuggestions triggerd");
+  //   if (input.isEmpty) return;
+  //
+  //   final String baseUrl =
+  //       'https://maps.googleapis.com/maps/api/place/autocomplete/json';
+  //   final url =
+  //       Uri.parse('$baseUrl?input=$input&key=$googleMapsApiKey&types=geocode');
+  //
+  //   try {
+  //     final http.Response response = await http.get(url);
+  //     if (response.statusCode == 200) {
+  //       final List<dynamic> suggestions =
+  //           json.decode(response.body)['predictions'];
+  //       state = state.copyWith(suggestions: suggestions);
+  //       print("Suggestions:${state.suggestions}");
+  //     } else {
+  //       throw Exception('Failed to load suggestions');
+  //     }
+  //   } catch (e) {
+  //     print('Error fetching suggestions: $e');
+  //   }
+  // }
+
+  Future<void> fetchAddressSuggestions(
+      String input, double latitude, double longitude) async {
+    print("fetchAddressSuggestions triggered");
+
     if (input.isEmpty) return;
 
     final String baseUrl =
         'https://maps.googleapis.com/maps/api/place/autocomplete/json';
-    final url =
-        Uri.parse('$baseUrl?input=$input&key=$googleMapsApiKey&types=geocode');
+
+    final String googleMapsApiKey =
+        'AIzaSyD6dWPriVXORUS6TYs8P71Cbp0Yrpxzl_4'; // replace with your API key
+    final int radius = 5000; // Radius in meters for nearby suggestions (5 km)
+
+    // Add location and radius to get suggestions based on proximity
+    final url = Uri.parse(
+        '$baseUrl?input=$input&location=$latitude,$longitude&radius=$radius&key=$googleMapsApiKey&types=geocode');
 
     try {
       final http.Response response = await http.get(url);
       if (response.statusCode == 200) {
         final List<dynamic> suggestions =
             json.decode(response.body)['predictions'];
+
+        // Handle suggestions (this would depend on your state management)
         state = state.copyWith(suggestions: suggestions);
-        print("Suggestions:${state.suggestions}");
+        print("Suggestions: ${state.suggestions}");
       } else {
         throw Exception('Failed to load suggestions');
       }
