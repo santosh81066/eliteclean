@@ -1,11 +1,12 @@
-import 'package:eliteclean/providers/addressnotifier.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'dart:async';
+
+import 'package:eliteclean/models/addressstate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
+import '../providers/addressnotifier.dart';
 import '../providers/locationnotifier.dart';
 import '../providers/textfieldnotifier.dart';
 
@@ -157,9 +158,6 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
   @override
   Widget build(BuildContext context) {
     final locationState = ref.watch(locationProvider);
-    final locationNotifier = ref.read(locationProvider.notifier);
-    final textState = ref.watch(textFieldProvider);
-    final addressState = ref.watch(addressProvider);
 
     MapController mapController = MapController();
     if (locationState.address != null && _searchController.text.isEmpty) {
@@ -494,256 +492,281 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                       onTap: () {
                         print("add address tapped");
 
-                        if (locationState.currentPosition != null) {
-                          // Open the dialog and listen for changes in locationState using a Consumer
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return Consumer(
-                                builder: (context, ref, child) {
-                                  // Re-read the locationState inside the dialog
-                                  final locationState =
-                                      ref.watch(locationProvider);
-                                  LatLng selectedLocation =
-                                      locationState.currentPosition!;
+                        // Open the dialog and listen for changes in locationState using a Consumer
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return Consumer(
+                              builder: (context, ref, child) {
+                                // Re-read the locationState inside the dialog
+                                final textState = ref.watch(textFieldProvider);
+                                final locationState =
+                                    ref.watch(locationProvider);
 
-                                  return AlertDialog(
-                                    contentPadding: EdgeInsets
-                                        .zero, // Remove default padding
-                                    content: SizedBox(
-                                      width: double.maxFinite,
-                                      height: 400, // Adjust height for the map
-                                      child: Stack(
-                                        children: [
-                                          // Search field positioned at the top
-                                          Positioned(
-                                            top: 10,
-                                            left: 10,
-                                            right: 10,
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black
-                                                        .withOpacity(0.1),
-                                                    blurRadius: 5,
-                                                    spreadRadius: 1,
+                                return Consumer(
+                                  builder: (context, ref, child) {
+                                    _searchController.text =
+                                        ref.watch(textFieldProvider);
+                                    final addressState =
+                                        ref.watch(addressProvider);
+                                    return AlertDialog(
+                                      contentPadding: EdgeInsets
+                                          .zero, // Remove default padding
+                                      content: SizedBox(
+                                        width: double.maxFinite,
+                                        height:
+                                            400, // Adjust height for the map
+                                        child: Stack(
+                                          children: [
+                                            // Search field positioned at the top
+                                            Positioned(
+                                              top: 10,
+                                              left: 10,
+                                              right: 10,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black
+                                                          .withOpacity(0.1),
+                                                      blurRadius: 5,
+                                                      spreadRadius: 1,
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
+                                                  child: TextField(
+                                                    onChanged: (text) {
+                                                      _onAddressChanged(text,
+                                                          addressNotifier);
+                                                      // Update Riverpod's state
+                                                      ref
+                                                          .read(
+                                                              textFieldProvider
+                                                                  .notifier)
+                                                          .updateText(text);
+                                                    },
+                                                    controller:
+                                                        _searchController,
+                                                    decoration: InputDecoration(
+                                                      contentPadding:
+                                                          EdgeInsets.symmetric(
+                                                              vertical: 10,
+                                                              horizontal: 16),
+                                                      hintText:
+                                                          'Search for a location',
+                                                      filled: true,
+                                                      fillColor: Colors.white,
+                                                      border:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                        borderSide:
+                                                            BorderSide.none,
+                                                      ),
+                                                      suffixIcon: textState ==
+                                                              ''
+                                                          ? const Icon(
+                                                              Icons.search)
+                                                          : IconButton(
+                                                              icon: const Icon(
+                                                                  Icons.clear),
+                                                              onPressed: () {
+                                                                addressNotifier
+                                                                    .clearSuggestions();
+                                                                _searchController
+                                                                    .clear();
+
+                                                                // Clear Riverpod's state
+                                                                ref
+                                                                    .read(textFieldProvider
+                                                                        .notifier)
+                                                                    .clearText();
+                                                              },
+                                                            ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+
+                                            // Map layer below the search bar
+                                            Positioned(
+                                              top:
+                                                  60, // Adjust this to ensure the search bar is not blocked by the map
+                                              left: 0,
+                                              right: 0,
+                                              bottom:
+                                                  0, // Add space for the Confirm button
+                                              child: FlutterMap(
+                                                mapController: mapController,
+                                                options: MapOptions(
+                                                  initialCenter: LatLng(
+                                                      addressState.latitude!,
+                                                      addressState.longitude!),
+                                                  initialZoom: 15,
+                                                  minZoom:
+                                                      5, // Set min zoom level
+                                                  maxZoom: 18,
+                                                  onTap: (_, latLng) {
+                                                    // Update the current location in Riverpod's state when tapped
+                                                    addressNotifier
+                                                        .setCurrentLocation(
+                                                            latLng);
+                                                    print(
+                                                        "on tap change address: ${latLng.latitude}, ${latLng.longitude}");
+                                                  },
+                                                ),
+                                                children: [
+                                                  TileLayer(
+                                                    urlTemplate:
+                                                        'https://mts1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+                                                    subdomains: [
+                                                      'mt0',
+                                                      'mt1',
+                                                      'mt2',
+                                                      'mt3'
+                                                    ],
+                                                  ),
+                                                  MarkerLayer(
+                                                    markers: [
+                                                      Marker(
+                                                        point: LatLng(
+                                                            addressState
+                                                                .latitude!,
+                                                            addressState
+                                                                .longitude!),
+                                                        child: const Icon(
+                                                          Icons.location_pin,
+                                                          color: Colors.red,
+                                                          size: 40.0,
+                                                        ),
+                                                        rotate: true,
+                                                      ),
+                                                    ],
                                                   ),
                                                 ],
                                               ),
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.all(8.0),
-                                                child: TextField(
-                                                  onChanged: (text) {
-                                                    // Update Riverpod's state
-                                                    ref
-                                                        .read(textFieldProvider
-                                                            .notifier)
-                                                        .updateText(text);
-                                                  },
-                                                  controller: _searchController,
-                                                  decoration: InputDecoration(
-                                                    contentPadding:
-                                                        EdgeInsets.symmetric(
-                                                            vertical: 10,
-                                                            horizontal: 16),
-                                                    hintText:
-                                                        'Search for a location',
-                                                    filled: true,
-                                                    fillColor: Colors.white,
-                                                    border: OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
-                                                      borderSide:
-                                                          BorderSide.none,
-                                                    ),
-                                                    suffixIcon: textState == ''
-                                                        ? IconButton(
-                                                            icon: const Icon(
-                                                                Icons.clear),
-                                                            onPressed: () {
-                                                              _searchController
-                                                                  .clear();
-                                                              ref
-                                                                  .read(addressProvider
-                                                                      .notifier)
-                                                                  .clearaddress();
-                                                              // Clear Riverpod's state
-                                                              ref
-                                                                  .read(textFieldProvider
-                                                                      .notifier)
-                                                                  .clearText();
-                                                            },
-                                                          )
-                                                        : const Icon(
-                                                            Icons.search),
-                                                  ),
-                                                ),
-                                              ),
                                             ),
-                                          ),
-                                          // Map layer below the search bar
-                                          Positioned(
-                                            top:
-                                                60, // Adjust this to ensure the search bar is not blocked by the map
-                                            left: 0,
-                                            right: 0,
-                                            bottom:
-                                                60, // Add space for the Confirm button
-                                            child: FlutterMap(
-                                              mapController: mapController,
-                                              options: MapOptions(
-                                                initialCenter: selectedLocation,
-                                                initialZoom: 15,
-                                                minZoom:
-                                                    5, // Set min zoom level
-                                                maxZoom: 18,
-                                                onTap: (_, latLng) {
-                                                  // Update the current location in Riverpod's state when tapped
-                                                  ref
-                                                      .read(addressProvider
-                                                          .notifier)
-                                                      .setCurrentLocation(
-                                                          latLng);
-                                                  print(
-                                                      "on tap change address: ${latLng.latitude}, ${latLng.longitude}");
-                                                },
-                                              ),
-                                              children: [
-                                                TileLayer(
-                                                  urlTemplate:
-                                                      'https://mts1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
-                                                  subdomains: [
-                                                    'mt0',
-                                                    'mt1',
-                                                    'mt2',
-                                                    'mt3'
-                                                  ],
-                                                ),
-                                                MarkerLayer(
-                                                  markers: [
-                                                    Marker(
-                                                      point: selectedLocation,
-                                                      child: const Icon(
-                                                        Icons.location_pin,
-                                                        color: Colors.red,
-                                                        size: 40.0,
+                                            if (addressState
+                                                .suggestions.isNotEmpty)
+                                              Positioned(
+                                                top:
+                                                    60, // Adjust this to ensure the search bar is not blocked by the map
+                                                left: 0,
+                                                right: 0,
+                                                bottom: 0,
+                                                child: Container(
+                                                  padding:
+                                                      const EdgeInsets.all(8),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors.grey
+                                                            .withOpacity(0.5),
+                                                        spreadRadius: 1,
+                                                        blurRadius: 7,
+                                                        offset:
+                                                            const Offset(0, 3),
                                                       ),
-                                                      rotate: true,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          // Address and Confirm button
-                                          Positioned(
-                                            bottom: 0,
-                                            left: 0,
-                                            right: 0,
-                                            child: Column(
-                                              children: [
-                                                Padding(
-                                                  padding: const EdgeInsets.all(
-                                                      16.0),
-                                                  child: SizedBox(
-                                                    width: double.infinity,
-                                                    child: ElevatedButton(
-                                                      onPressed: () {
-                                                        // Hardcode the location ID (replace "12345" with your actual location ID)
-                                                        String locationId = '';
-
-                                                        // Check if current position and address are available
-                                                        if (locationState
-                                                                    .currentPosition !=
-                                                                null &&
-                                                            locationState
-                                                                    .address !=
-                                                                null) {
-                                                          // Call the method to upload location data to Realtime Database with the hardcoded ID
+                                                    ],
+                                                  ),
+                                                  child: ListView.builder(
+                                                    shrinkWrap: true,
+                                                    physics:
+                                                        const NeverScrollableScrollPhysics(),
+                                                    itemCount: addressState
+                                                        .suggestions.length,
+                                                    itemBuilder:
+                                                        (context, index) {
+                                                      final suggestion =
+                                                          addressState
+                                                                  .suggestions[
+                                                              index];
+                                                      return ListTile(
+                                                        title: Text(suggestion[
+                                                            'description']),
+                                                        onTap: () {
                                                           ref
                                                               .read(
-                                                                  addressProvider
+                                                                  textFieldProvider
                                                                       .notifier)
-                                                              .uploadLocationToRealtimeDB(
-                                                                locationId, // Hardcoded location ID
-                                                                addressState
-                                                                    .latitude!,
-                                                                addressState
-                                                                    .longitude!, // Pass the current position
-                                                                addressState
-                                                                    .selectedAddress!, // Pass the address
-                                                              );
-                                                        } else {
-                                                          // Show error message if location or address is missing
-                                                          ScaffoldMessenger.of(
-                                                                  context)
-                                                              .showSnackBar(
-                                                            SnackBar(
-                                                                content: Text(
-                                                                    'Location or address is missing')),
-                                                          );
-                                                        }
-                                                      },
-                                                      style: ElevatedButton
-                                                          .styleFrom(
-                                                        backgroundColor: Colors
-                                                            .green, // Button background color
-                                                        padding: const EdgeInsets
-                                                            .symmetric(
-                                                            vertical:
-                                                                16.0), // Button height
-                                                      ),
-                                                      child: const Text(
-                                                        'Confirm',
-                                                        style: TextStyle(
-                                                            color: Colors.white,
-                                                            fontSize:
-                                                                16), // Text styling
+                                                              .updateText(
+                                                                  suggestion[
+                                                                      'description']);
+                                                          addressNotifier
+                                                              .selectAddress(
+                                                                  suggestion[
+                                                                      'place_id']);
+                                                          addressNotifier
+                                                              .clearSuggestions();
+                                                        },
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
+                                            // Address and Confirm button
+                                            Positioned(
+                                              bottom: 0,
+                                              left: 0,
+                                              right: 0,
+                                              child: Column(
+                                                children: [
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            16.0),
+                                                    child: SizedBox(
+                                                      width: double.infinity,
+                                                      child: ElevatedButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context)
+                                                              .pop(); // Close the dialog
+                                                        },
+                                                        style: ElevatedButton
+                                                            .styleFrom(
+                                                          backgroundColor: Colors
+                                                              .green, // Button background color
+                                                          padding: const EdgeInsets
+                                                              .symmetric(
+                                                              vertical:
+                                                                  16.0), // Button height
+                                                        ),
+                                                        child: const Text(
+                                                          'Confirm',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize:
+                                                                  16), // Text styling
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
-                                                ),
-                                              ],
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          );
-                        } else {
-                          // If currentPosition is null, show an error or loading indicator
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text('Location not found'),
-                                content: const Center(
-                                  child: Text(
-                                      'Unable to fetch location. Please try again.'),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context)
-                                          .pop(); // Close the dialog
-                                    },
-                                    child: const Text('OK'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        }
+                                    );
+                                  },
+                                );
+                              },
+                            );
+                          },
+                        );
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
