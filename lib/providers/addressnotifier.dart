@@ -86,6 +86,24 @@ class AddressNotifier extends StateNotifier<AddressState> {
     }
   }
 
+  Future<void> uploadLocationToRealtimeDB(
+      String id, double lattitude, double longitude, String address) async {
+    final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+    User? user = FirebaseAuth.instance.currentUser;
+    try {
+      // Append location data to the 'locations' list under the given ID
+      await dbRef.child('${user!.uid}/address_list').push().set({
+        'latitude': lattitude,
+        'longitude': longitude,
+        'address': address,
+        'time': DateTime.now().toIso8601String(),
+      });
+      print("Location added to list in Realtime Database");
+    } catch (e) {
+      print("Failed to upload location: $e");
+    }
+  }
+
   Future<void> setCurrentLocation(LatLng newPosition) async {
     try {
       // Fetch the address based on the new position
