@@ -143,7 +143,7 @@ class _LoginState extends State<Login> {
                               .infinity, // Makes the button take full width
                           child: ElevatedButton(
                             onPressed: loader == true
-                                ? () {} // Disable interaction but keep the style
+                                ? null // Disable interaction but keep the style
                                 : () {
                                     String phoneNumber =
                                         _controller.text.trim();

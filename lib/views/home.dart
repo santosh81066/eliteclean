@@ -84,7 +84,7 @@ class _HomeState extends ConsumerState<Home> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Your Packages',
+                          'Your booking',
                           style: TextStyle(
                             color: Color(0xFF1E116B),
                             fontSize: 20,

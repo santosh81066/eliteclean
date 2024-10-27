@@ -255,7 +255,7 @@ class _ServiceDetailsState extends State<ServiceDetails> {
                     Navigator.pushNamed(
                       context,
                       '/selectpackage',
-                      arguments: {'washroomCount': washroomCount},
+                      arguments: {'WashroomCount': washroomCount},
                     );
                   },
                   style: ElevatedButton.styleFrom(

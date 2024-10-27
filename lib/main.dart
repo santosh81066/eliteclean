@@ -1,4 +1,5 @@
 import 'package:eliteclean/firebase_options.dart';
+import 'package:eliteclean/views/bookingpayment.dart';
 import 'package:eliteclean/views/confirmbooking.dart';
 import 'package:eliteclean/views/home.dart';
 import 'package:eliteclean/views/loginpage.dart';
@@ -80,6 +81,7 @@ class MyApp extends ConsumerWidget {
         '/confirmbooking': (context) => ConfirmBookingScreen(), // otp route
         '/pendingbooking': (context) => PendingBookingScreen(),
         '/viewbooking': (context) => ViewBooking(),
+        '/bookingpayment': (context) => PaymentForBooking(),
       },
     );
   }

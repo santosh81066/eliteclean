@@ -265,6 +265,15 @@ class AddressNotifier extends StateNotifier<AddressState> {
       print("Failed to upload location: $e");
     }
   }
+
+  void updateState(
+      {String? address, int? selectedIndex, double? lat, double? long}) {
+    state = state.copyWith(
+        selectedAddress: address,
+        selectedIndex: selectedIndex,
+        latitude: lat,
+        longitude: long);
+  }
 }
 
 // Riverpod provider for AddressNotifier

@@ -3,13 +3,13 @@ class AddressState {
   final double? latitude;
   final double? longitude;
   final String? selectedAddress;
-
   final List<dynamic> countries; // List of countries
   final List<String> states; // List of states based on selected country
   final List<String> cities; // List of cities based on selected state
   final String? selectedCountry; // Selected country
   final String? selectedState; // Selected state
   final String? selectedCity; // Selected city
+  final int? selectedIndex; // Track the selected index
 
   AddressState({
     this.suggestions = const [],
@@ -22,6 +22,7 @@ class AddressState {
     this.selectedCountry,
     this.selectedState,
     this.selectedCity,
+    this.selectedIndex, // Include selectedIndex in the constructor
   });
 
   AddressState copyWith({
@@ -35,6 +36,7 @@ class AddressState {
     String? selectedCountry,
     String? selectedState,
     String? selectedCity,
+    int? selectedIndex, // Add selectedIndex to copyWith
   }) {
     return AddressState(
       suggestions: suggestions ?? this.suggestions,
@@ -47,6 +49,8 @@ class AddressState {
       selectedCountry: selectedCountry ?? this.selectedCountry,
       selectedState: selectedState ?? this.selectedState,
       selectedCity: selectedCity ?? this.selectedCity,
+      selectedIndex:
+          selectedIndex ?? this.selectedIndex, // Return selectedIndex
     );
   }
 }

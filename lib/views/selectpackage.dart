@@ -257,7 +257,10 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     MapController mapController = MapController();
-
+    String cost = '\$5';
+    final Map<String, dynamic> args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final int washroomcount = args['WashroomCount'];
     final addressNotifier = ref.read(addressProvider.notifier);
     return Scaffold(
       appBar: AppBar(
@@ -362,7 +365,6 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                   ),
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Flexible(
                       child: Text(
@@ -384,25 +386,13 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
               const SizedBox(height: 16),
 
               // Months selection (only visible if "Monthly" is selected)
-              if (_tabController.index == 1)
-                const SizedBox(
-                  width: 311,
-                  child: Text(
-                    'Select no.of months',
-                    style: TextStyle(
-                      color: Color(0xFF1F1F39),
-                      fontSize: 14,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+
               if (_tabController.index == 1) const SizedBox(height: 16),
               if (_tabController.index == 1)
                 const SizedBox(
                   width: 311,
                   child: Text(
-                    'Select no.of months',
+                    'Select no of months',
                     style: TextStyle(
                       color: Color(0xFF1F1F39),
                       fontSize: 14,
@@ -416,20 +406,10 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
               const SizedBox(height: 16),
 
               // Uses selection
+
               if (_tabController.index == 1)
                 const Text(
-                  'No.of uses',
-                  style: TextStyle(
-                    color: Color(0xFF1F1F39),
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              if (_tabController.index == 1) const SizedBox(height: 16),
-              if (_tabController.index == 1)
-                const Text(
-                  'No.of uses',
+                  'No of uses',
                   style: TextStyle(
                     color: Color(0xFF1F1F39),
                     fontSize: 14,
@@ -481,7 +461,7 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
               ),
 
               _databaseRef == null
-                  ? Center(child: CircularProgressIndicator())
+                  ? const Center(child: CircularProgressIndicator())
                   : StreamBuilder(
                       stream: _databaseRef!.onValue,
                       builder:
@@ -493,10 +473,10 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                           int loCount = data != null ? data.length : 0;
 
                           if (loCount == 0) {
-                            return Center(
+                            return const Center(
                                 child: Text('No addresses available.'));
                           }
-
+                          List<dynamic> addresses = data!.values.toList();
                           return SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Padding(
@@ -504,47 +484,68 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                               child: Row(
                                 children: List.generate(
                                   loCount, // Number of containers based on Firebase data length
-                                  (index) => Container(
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 5),
-                                    width: screenWidth * 0.25,
-                                    height: screenHeight * 0.15,
-                                    padding: const EdgeInsets.all(16.0),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(2),
-                                        topRight: Radius.circular(20),
-                                        bottomLeft: Radius.circular(20),
-                                        bottomRight: Radius.circular(20),
-                                      ),
-                                      border: Border.all(
-                                        color: const Color(0xff6E6BE8),
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        SizedBox(
-                                          height:
-                                              50, // Adjust the size as needed
-                                          child: Image.asset(
-                                            'assets/images/Home.png', // Replace with your image path
-                                            fit: BoxFit.contain,
-                                          ),
+                                  (index) => GestureDetector(
+                                    onTap: () {
+                                      ref
+                                          .read(addressProvider.notifier)
+                                          .updateState(
+                                              address: addresses[index]
+                                                  ['address'],
+                                              selectedIndex: index,
+                                              lat: addresses[index]['latitude'],
+                                              long: addresses[index]
+                                                  ['longitude']);
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 5),
+                                      width: screenWidth * 0.25,
+                                      height: screenHeight * 0.15,
+                                      padding: const EdgeInsets.all(16.0),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(2),
+                                          topRight: Radius.circular(20),
+                                          bottomLeft: Radius.circular(20),
+                                          bottomRight: Radius.circular(20),
                                         ),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          'House ${index + 1}', // Dynamic text
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Color(0xff6E6BE8),
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                        border: Border.all(
+                                          color: const Color(0xff6E6BE8),
+                                          width: ref
+                                                      .read(addressProvider)
+                                                      .selectedIndex ==
+                                                  index
+                                              ? 4
+                                              : 2,
                                         ),
-                                      ],
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Flexible(
+                                            child: SizedBox(
+                                              height: 50,
+                                              child: Image.asset(
+                                                'assets/images/Home.png',
+                                                fit: BoxFit.contain,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          Flexible(
+                                            child: Text(
+                                              'House ${index + 1}',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Color(0xff6E6BE8),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          )
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -941,10 +942,10 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                   color: const Color(0xFFF3F3FC),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Cost per day per 1 washroom is',
                       style: TextStyle(
                         fontSize: 16,
@@ -952,11 +953,11 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                         color: Colors.black,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
+                        const Text(
                           'Total number of washrooms and app cost will be\ncalculated at the end.',
                           style: TextStyle(
                             fontSize: 12,
@@ -965,8 +966,8 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                           ),
                         ),
                         Text(
-                          '\$5',
-                          style: TextStyle(
+                          cost,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
@@ -1014,8 +1015,14 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/confirmbooking');
-                  Navigator.pushNamed(context, '/confirmbooking');
+                  Navigator.pushNamed(context, '/confirmbooking', arguments: {
+                    'StartDate': _dateTimeController.text,
+                    'Price': cost,
+                    'Note': _noteController.text.trim(),
+                    'Package':
+                        _tabController.index == 1 ? 'Monthly' : 'Instant',
+                    'WashroomCount': washroomcount
+                  });
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF583EF2),
