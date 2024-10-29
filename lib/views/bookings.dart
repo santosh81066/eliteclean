@@ -1,7 +1,42 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 class BookingScreen extends StatelessWidget {
-  final List<Map<String, String>> bookings = [
+   BookingScreen({super.key});
+
+  Stream<List<Map<String, dynamic>>> getOngoingBookingsStream(String userId) {
+  final dbRef = FirebaseDatabase.instance.ref();
+  return dbRef.onValue.map((event) {
+    List<Map<String, dynamic>> bookings = [];
+
+    if (event.snapshot.value != null) {
+      Map<dynamic, dynamic> allUsersData = event.snapshot.value as Map;
+
+      // Iterate over all users' bookings to find those created by the logged-in user
+      allUsersData.forEach((userIdKey, userData) {
+        if (userData is Map && userData['bookings'] != null) {
+          Map<dynamic, dynamic> bookingsData = userData['bookings'] as Map;
+
+          bookingsData.forEach((bookingId, bookingInfo) {
+            if (bookingInfo is Map && bookingInfo['booking_status'] == 'o' &&
+                bookingInfo['creator_id'] == userId) {
+              bookings.add({
+                'address': bookingInfo['address'],
+                'time': bookingInfo['time'],
+                'price': bookingInfo['price'],
+                'package': bookingInfo['package'],
+                
+              });
+            }
+          });
+        }
+      });
+    }
+
+    return bookings;
+  });
+}
+final List<Map<String, String>> bookings = [
     {
       "bookingNo": "#12KL23",
       "date": "13 Mar 2021",
@@ -25,7 +60,6 @@ class BookingScreen extends StatelessWidget {
     },
     // Add more bookings if needed
   ];
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:eliteclean/providers/addressnotifier.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -77,107 +78,118 @@ class ConfirmBookingScreen extends StatelessWidget {
   bool isBookingProcessActive = false;
 
   Future<void> assignBookingToNearestUser(double bookingLat, double bookingLon,
-      Map<String, dynamic> bookingData, BuildContext context) async {
-    // Prevent multiple simultaneous executions
-    if (isBookingProcessActive) {
-      print("Booking process already active, blocking new calls.");
-      return;
-    }
-
-    isBookingProcessActive = true;
-
-    try {
-      // Check if there's already an ongoing booking at the same location
-      bool existingBooking = await checkExistingBooking(bookingLat, bookingLon);
-
-      if (existingBooking) {
-        print("Ongoing booking detected. No new booking will be created.");
-        await _showBookingExistsDialog(context);
-        return; // Explicitly return to stop any further code execution
-      }
-
-      print("No ongoing booking detected, proceeding to assign new booking.");
-      await _findAndAssignBookingToNearestUser(
-          bookingLat, bookingLon, bookingData, context);
-    } finally {
-      // Ensure the busy flag is reset
-      isBookingProcessActive = false;
-    }
+    Map<String, dynamic> bookingData, BuildContext context) async {
+  if (isBookingProcessActive) {
+    print("Booking process already active, blocking new calls.");
+    return;
   }
 
-  Future<void> _findAndAssignBookingToNearestUser(
-      double bookingLat,
-      double bookingLon,
-      Map<String, dynamic> bookingData,
-      BuildContext context) async {
-    final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
-    DatabaseEvent event = await dbRef.once();
+  isBookingProcessActive = true;
+    final String? creatorId = FirebaseAuth.instance.currentUser?.uid;
 
-    if (!event.snapshot.exists) {
-      print("No users found in the database.");
+    if (creatorId == null) {
+      print("No logged-in user found.");
       return;
     }
 
-    Map<dynamic, dynamic> allUsersDynamic =
-        event.snapshot.value as Map<dynamic, dynamic>;
-    Map<String, dynamic> allUsers = Map<String, dynamic>.from(allUsersDynamic);
+    // Add creator_id directly to bookingData
+    bookingData['creator_id'] = creatorId;
 
-    double minDistance = double.infinity;
-    String nearestUserId = '';
+  try {
+    bool existingBooking = await checkExistingBooking(bookingLat, bookingLon);
 
-    allUsers.forEach((userId, userData) {
-      if (userData is Map && userData['user_info'] != null) {
-        Map<dynamic, dynamic> userInfoDynamic =
-            userData['user_info'] as Map<dynamic, dynamic>;
-        userInfoDynamic.forEach((key, userInfoData) {
-          if (userInfoData is Map) {
-            Map<String, dynamic> userInfo =
-                Map<String, dynamic>.from(userInfoData);
-            String? role = userInfo['use_role'] as String?;
-            if (role == 's') {
-              double userLat =
-                  double.tryParse(userInfo['latitude'].toString()) ?? 0.0;
-              double userLon =
-                  double.tryParse(userInfo['longitude'].toString()) ?? 0.0;
-              double distance =
-                  calculateDistance(bookingLat, bookingLon, userLat, userLon);
-              if (distance < minDistance) {
-                minDistance = distance;
-                nearestUserId = userId;
-              }
+    if (existingBooking) {
+      print("Ongoing booking detected. No new booking will be created.");
+      await _showBookingExistsDialog(context);
+      isBookingProcessActive = false;
+      return; // Ensure no further processing occurs if an ongoing booking exists
+    }
+
+    print("No ongoing booking detected, proceeding to assign new booking.");
+    await _findAndAssignBookingToNearestUser(
+        bookingLat, bookingLon, bookingData, context);
+  } finally {
+    isBookingProcessActive = false;
+  }
+}
+
+Future<void> _findAndAssignBookingToNearestUser(
+    double bookingLat,
+    double bookingLon,
+    Map<String, dynamic> bookingData,
+    BuildContext context) async {
+  final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+  DatabaseEvent event = await dbRef.once();
+
+  if (!event.snapshot.exists) {
+    print("No users found in the database.");
+    return;
+  }
+
+  Map<dynamic, dynamic> allUsersDynamic =
+      event.snapshot.value as Map<dynamic, dynamic>;
+  Map<String, dynamic> allUsers = Map<String, dynamic>.from(allUsersDynamic);
+
+  double minDistance = double.infinity;
+  String nearestUserId = '';
+
+  allUsers.forEach((userId, userData) {
+    if (userData is Map && userData['user_info'] != null) {
+      Map<dynamic, dynamic> userInfoDynamic =
+          userData['user_info'] as Map<dynamic, dynamic>;
+      userInfoDynamic.forEach((key, userInfoData) {
+        if (userInfoData is Map) {
+          Map<String, dynamic> userInfo =
+              Map<String, dynamic>.from(userInfoData);
+          String? role = userInfo['use_role'] as String?;
+          if (role == 's') {
+            double userLat =
+                double.tryParse(userInfo['latitude'].toString()) ?? 0.0;
+            double userLon =
+                double.tryParse(userInfo['longitude'].toString()) ?? 0.0;
+            double distance =
+                calculateDistance(bookingLat, bookingLon, userLat, userLon);
+            if (distance < minDistance) {
+              minDistance = distance;
+              nearestUserId = userId;
             }
           }
-        });
-      }
-    });
-
-    if (nearestUserId.isNotEmpty) {
-      String newBookingKey = dbRef.child('$nearestUserId/bookings').push().key!;
-      await dbRef
-          .child('$nearestUserId/bookings/$newBookingKey')
-          .set(bookingData);
-      print("Booking successfully assigned to nearest user: $nearestUserId");
-      _showSuccessDialog(
-          context); // Show success dialog only if the booking is assigned
-    } else {
-      print("No suitable user found to assign the booking.");
+        }
+      });
     }
+  });
+
+  if (nearestUserId.isNotEmpty) {
+    String newBookingKey = dbRef.child('$nearestUserId/bookings').push().key!;
+    await dbRef.child('$nearestUserId/bookings/$newBookingKey').set(bookingData).then((_) {
+      print("Booking successfully assigned to nearest user: $nearestUserId");
+      _showSuccessDialog(context); // Show success dialog only if booking insertion is successful
+    }).catchError((error) {
+      print("Failed to assign booking: $error");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to assign booking. Please try again."))
+      );
+    });
+  } else {
+    print("No suitable user found to assign the booking.");
   }
+}
+
 
   Future<void> _showBookingExistsDialog(BuildContext context) async {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Existing Booking Detected"),
-          content: Text(
+          title: const Text("Existing Booking Detected"),
+          content: const Text(
               "You have an ongoing booking at this location. Please complete it before creating a new one."),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: Text("OK"),
+              child: const Text("OK"),
             ),
           ],
         );
@@ -198,7 +210,7 @@ class ConfirmBookingScreen extends StatelessWidget {
     final int washroomcount = args['WashroomCount'];
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           "Confirm Booking",
           style: TextStyle(
             fontSize: 16,
@@ -212,13 +224,13 @@ class ConfirmBookingScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(
             children: [
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Card(
                 elevation: 2,
                 color: Colors.white, // Set card background color to white
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: Color(0xFFEAE9FF)),
+                  side: const BorderSide(color: Color(0xFFEAE9FF)),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -228,7 +240,7 @@ class ConfirmBookingScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildHeaderRow("Booking detail", Icons.edit),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           _buildDetailItem("Package selected", package),
                           _buildDetailItem("Working time", startDate),
                           _buildDetailItem("Location",
@@ -242,13 +254,13 @@ class ConfirmBookingScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Card(
                 elevation: 2,
                 color: Colors.white, // Set card background color to white
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: Color(0xFFEAE9FF)),
+                  side: const BorderSide(color: Color(0xFFEAE9FF)),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -256,15 +268,15 @@ class ConfirmBookingScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildHeaderRow("Payment detail", Icons.edit),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       _buildDetailItem("Payment method", "Cash on service"),
-                      SizedBox(height: 10),
-                      Text("Charges",
+                      const SizedBox(height: 10),
+                      const Text("Charges",
                           style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF38385E))),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       _buildChargeRow("Per 1 washroom", "\$10"),
                       _buildChargeRow("Per 1 day", "\$2"),
                       _buildChargeRow("Total days", "30"),
@@ -274,7 +286,7 @@ class ConfirmBookingScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               _buildBottomBar(context, startDate, price, package),
             ],
           ),
@@ -289,13 +301,13 @@ class ConfirmBookingScreen extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: Color(0xFF583EF2),
           ),
         ),
-        Icon(icon, color: Color(0xFF583EF2), size: 20),
+        Icon(icon, color: const Color(0xFF583EF2), size: 20),
       ],
     );
   }
@@ -306,17 +318,17 @@ class ConfirmBookingScreen extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(
+          style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: Color(0xFF38385E)),
         ),
-        SizedBox(height: 5),
+        const SizedBox(height: 5),
         Text(
           subtitle,
-          style: TextStyle(fontSize: 14, color: Color(0xFF77779D)),
+          style: const TextStyle(fontSize: 14, color: Color(0xFF77779D)),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
       ],
     );
   }
@@ -326,12 +338,12 @@ class ConfirmBookingScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Icon(Icons.location_pin, color: Color(0xFF6D6BE7)),
-          SizedBox(width: 10),
+          const Icon(Icons.location_pin, color: Color(0xFF6D6BE7)),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               address,
-              style: TextStyle(fontSize: 14, color: Color(0xFF77779D)),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF77779D)),
             ),
           ),
         ],
@@ -345,9 +357,9 @@ class ConfirmBookingScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 14, color: Color(0xFF77779D))),
+          Text(label, style: const TextStyle(fontSize: 14, color: Color(0xFF77779D))),
           Text(amount,
-              style: TextStyle(
+              style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF6D6BE7))),
@@ -359,15 +371,15 @@ class ConfirmBookingScreen extends StatelessWidget {
   Widget _buildBottomBar(
       BuildContext context, String startDate, String price, String package) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.3),
             blurRadius: 10,
-            offset: Offset(0, -3),
+            offset: const Offset(0, -3),
           ),
         ],
       ),
@@ -376,11 +388,11 @@ class ConfirmBookingScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              _buildDot(Color(0xFFF3A8A2)),
-              SizedBox(width: 10),
-              _buildDot(Color(0xFFF3A8A2)),
-              SizedBox(width: 10),
-              _buildDot(Color(0xFFF3A8A2)),
+              _buildDot(const Color(0xFFF3A8A2)),
+              const SizedBox(width: 10),
+              _buildDot(const Color(0xFFF3A8A2)),
+              const SizedBox(width: 10),
+              _buildDot(const Color(0xFFF3A8A2)),
             ],
           ),
           Consumer(
@@ -416,12 +428,12 @@ class ConfirmBookingScreen extends StatelessWidget {
                         // Navigator.pushNamed(context, '/bookingpayment');
                       },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF583EF2),
-                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  backgroundColor: const Color(0xFF583EF2),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text(
+                child: const Text(
                   "Book now",
                   style: TextStyle(
                     fontSize: 16,
@@ -442,15 +454,15 @@ class ConfirmBookingScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Booking Successful"),
-          content: Text("Your booking has been successfully assigned."),
+          title: const Text("Booking Successful"),
+          content: const Text("Your booking has been successfully assigned."),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pushNamed('/home'); // Close the dialog
                 // Navigate to payment screen
               },
-              child: Text("ok"),
+              child: const Text("ok"),
             ),
           ],
         );
