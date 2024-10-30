@@ -1,13 +1,14 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 class BookingScreen extends StatelessWidget {
    BookingScreen({super.key});
-
-  Stream<List<Map<String, dynamic>>> getOngoingBookingsStream(String userId) {
+Stream<Map<String, dynamic>?> getLatestOngoingBookingStream(String userId) {
   final dbRef = FirebaseDatabase.instance.ref();
+
   return dbRef.onValue.map((event) {
-    List<Map<String, dynamic>> bookings = [];
+    Map<String, dynamic>? latestBooking;
 
     if (event.snapshot.value != null) {
       Map<dynamic, dynamic> allUsersData = event.snapshot.value as Map;
@@ -18,24 +19,25 @@ class BookingScreen extends StatelessWidget {
           Map<dynamic, dynamic> bookingsData = userData['bookings'] as Map;
 
           bookingsData.forEach((bookingId, bookingInfo) {
-            if (bookingInfo is Map && bookingInfo['booking_status'] == 'o' &&
+            if (bookingInfo is Map &&
+                bookingInfo['booking_status'] == 'o' &&
                 bookingInfo['creator_id'] == userId) {
-              bookings.add({
+              latestBooking = {
                 'address': bookingInfo['address'],
                 'time': bookingInfo['time'],
                 'price': bookingInfo['price'],
                 'package': bookingInfo['package'],
-                
-              });
+              };
             }
           });
         }
       });
     }
 
-    return bookings;
+    return latestBooking;
   });
 }
+
 final List<Map<String, String>> bookings = [
     {
       "bookingNo": "#12KL23",
@@ -64,7 +66,7 @@ final List<Map<String, String>> bookings = [
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     double containerWidth = screenWidth > 360 ? 320 : screenWidth * 0.9;
-
+final String userId = FirebaseAuth.instance.currentUser!.uid;
     return DefaultTabController(
       length: 2, // Number of tabs
       child: Scaffold(
@@ -73,8 +75,8 @@ final List<Map<String, String>> bookings = [
         appBar: AppBar(
           backgroundColor:
               Colors.white, // Ensure AppBar background is also white
-          iconTheme: IconThemeData(color: Colors.black), // AppBar icon color
-          title: Text(
+          iconTheme: const IconThemeData(color: Colors.black), // AppBar icon color
+          title: const Text(
             'Bookings',
             style: TextStyle(color: Colors.black), // AppBar title color
           ),
@@ -90,7 +92,7 @@ final List<Map<String, String>> bookings = [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
+                          const Text(
                             'Recent',
                             style: TextStyle(
                               color: Color(0xFF1E116B),
@@ -100,10 +102,10 @@ final List<Map<String, String>> bookings = [
                             ),
                           ),
                           PopupMenuButton<String>(
-                            offset: Offset(0, 30),
+                            offset: const Offset(0, 30),
                             color: Colors.white,
-                            icon: Icon(Icons.more_horiz, color: Colors.black),
-                            shape: RoundedRectangleBorder(
+                            icon: const Icon(Icons.more_horiz, color: Colors.black),
+                            shape: const RoundedRectangleBorder(
                               borderRadius: BorderRadius.only(
                                 bottomLeft: Radius.circular(
                                     8), // Custom radius for bottom left
@@ -130,87 +132,110 @@ final List<Map<String, String>> bookings = [
                           ), // Three dots icon
                         ],
                       ),
-                      SizedBox(
+                      const SizedBox(
                           height:
                               10), // Space between the row and the main container
-                      Container(
-                        width: containerWidth,
+                              StreamBuilder<Map<String, dynamic>?>(
+  stream: getLatestOngoingBookingStream(userId),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const CircularProgressIndicator();
+    } else if (snapshot.hasError) {
+      return Text("Error: ${snapshot.error}");
+    } else if (!snapshot.hasData || snapshot.data == null) {
+      return Column(
+        children: [
+          Image.asset(
+            'assets/images/emptyservice.png', // Replace with your image asset path
+            height: 80,
+            width: 80,
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'No package subscribes yet...',
+            style: TextStyle(
+              color: Color(0xFF808080),
+              fontSize: 12,
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      );
+    } else {
+      var booking = snapshot.data!;
+      return Center(
+        child: Container(
+          width: containerWidth,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           border:
-                              Border.all(color: Color(0xFFEAE9FF), width: 1),
-                          borderRadius: BorderRadius.all(Radius.circular(3)),
+                              Border.all(color: const Color(0xFFEAE9FF), width: 1),
+                          borderRadius: const BorderRadius.all(Radius.circular(3)),
                         ),
-                        child: Padding(
-                          padding: EdgeInsets.all(22),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Booking no #12KL23',
-                                style: TextStyle(
-                                  color: Color(0xFF1F1F39),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'Working time',
-                                style: TextStyle(
+          child: Padding(
+            padding: EdgeInsets.all(22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "Location",
+                  style: TextStyle(
                                   color: Color(0xFF38385E),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
-                              ),
-                              Text(
-                                'Monday - 22 Mar 2021 - 12:30 PM',
-                                style: TextStyle(
-                                  color: Color(0xFF77779D),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'Location',
-                                style: TextStyle(
-                                  color: Color(0xFF38385E),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                'House 1',
-                                style: TextStyle(
-                                  color: Color(0xFF583EF2),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                'Room 123, Brooklyn St, Kepler District',
-                                style: TextStyle(
-                                  color: Color(0xFF77779D),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'Cleaner name',
-                                style: TextStyle(
-                                  color: Color(0xFF38385E),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                'Hassam Safdar Khan',
-                                style: TextStyle(
-                                  color: Color(0xFF77779D),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Row(
+                ),
+                Text(
+                  "Address: ${booking['address']}",
+                  style: const TextStyle(
+                    color: Color(0xFF38385E),
+                    fontSize: 12,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                 Text(
+                  "working time",
+                    style: TextStyle(
+                                    color: Color(0xFF38385E),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                ),
+                    const SizedBox(height: 5),
+                Text(
+                  "Time: ${booking['time']}",
+                  style: const TextStyle(
+                    color: Color(0xFF38385E),
+                    fontSize: 12,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  "Price: ${booking['price']}",
+                  style: const TextStyle(
+                    color: Color(0xFF38385E),
+                    fontSize: 12,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  "Package: ${booking['package']}",
+                  style: const TextStyle(
+                    color: Color(0xFF38385E),
+                    fontSize: 12,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
@@ -247,14 +272,95 @@ final List<Map<String, String>> bookings = [
                                     ),
                                   ),
                                 ],
-                              ),
-                              SizedBox(height: 22),
-                            ],
-                          ),
-                        ),
-                      ),
+                              )
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  },
+),
+
+                      // Container(
+                      //  ,
+                      //   child: Padding(
+                      //     padding: EdgeInsets.all(22),
+                      //     child: Column(
+                      //       crossAxisAlignment: CrossAxisAlignment.start,
+                      //       children: [
+                      //         Text(
+                      //           'Booking no #12KL23',
+                      //           style: TextStyle(
+                      //             color: Color(0xFF1F1F39),
+                      //             fontSize: 14,
+                      //             fontWeight: FontWeight.w600,
+                      //           ),
+                      //         ),
+                      //         SizedBox(height: 16),
+                      //         Text(
+                      //           'Working time',
+                      //           style: TextStyle(
+                      //             color: Color(0xFF38385E),
+                      //             fontSize: 12,
+                      //             fontWeight: FontWeight.w600,
+                      //           ),
+                      //         ),
+                      //         Text(
+                      //           'Monday - 22 Mar 2021 - 12:30 PM',
+                      //           style: TextStyle(
+                      //             color: Color(0xFF77779D),
+                      //             fontSize: 14,
+                      //           ),
+                      //         ),
+                      //         SizedBox(height: 16),
+                      //         Text(
+                      //           'Location',
+                      //           style: TextStyle(
+                      //             color: Color(0xFF38385E),
+                      //             fontSize: 12,
+                      //             fontWeight: FontWeight.w600,
+                      //           ),
+                      //         ),
+                      //         Text(
+                      //           'House 1',
+                      //           style: TextStyle(
+                      //             color: Color(0xFF583EF2),
+                      //             fontSize: 12,
+                      //             fontWeight: FontWeight.w600,
+                      //           ),
+                      //         ),
+                      //         Text(
+                      //           'Room 123, Brooklyn St, Kepler District',
+                      //           style: TextStyle(
+                      //             color: Color(0xFF77779D),
+                      //             fontSize: 14,
+                      //           ),
+                      //         ),
+                      //         SizedBox(height: 16),
+                      //         Text(
+                      //           'Cleaner name',
+                      //           style: TextStyle(
+                      //             color: Color(0xFF38385E),
+                      //             fontSize: 12,
+                      //             fontWeight: FontWeight.w600,
+                      //           ),
+                      //         ),
+                      //         Text(
+                      //           'Hassam Safdar Khan',
+                      //           style: TextStyle(
+                      //             color: Color(0xFF77779D),
+                      //             fontSize: 14,
+                      //           ),
+                      //         ),
+                      //         ,
+                      //         SizedBox(height: 22),
+                      //       ],
+                      //     ),
+                      //   ),
+                      // ),
                       // TabBar is directly below the main container
-                      TabBar(
+                      const TabBar(
                         dividerColor: Colors.transparent,
                         indicatorColor: Color(0xFF583EF2),
                         labelColor: Color(0xFF1E116B),
@@ -275,7 +381,7 @@ final List<Map<String, String>> bookings = [
                               itemBuilder: (context, index) {
                                 return Card(
                                   color: Colors.white,
-                                  margin: EdgeInsets.all(8),
+                                  margin: const EdgeInsets.all(8),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(3),
                                   ),
@@ -287,13 +393,13 @@ final List<Map<String, String>> bookings = [
                                       children: [
                                         Text(
                                           'Booking no ${bookings[index]["bookingNo"]}',
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             color: Colors.black,
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        SizedBox(height: 8),
+                                        const SizedBox(height: 8),
                                         Text(
                                           '${bookings[index]["date"]} - ${bookings[index]["time"]}',
                                           style: TextStyle(
@@ -308,7 +414,7 @@ final List<Map<String, String>> bookings = [
                                             fontSize: 14,
                                           ),
                                         ),
-                                        SizedBox(height: 8),
+                                        const SizedBox(height: 8),
                                         Text(
                                           bookings[index]["name"]!,
                                           style: TextStyle(
@@ -317,7 +423,7 @@ final List<Map<String, String>> bookings = [
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        SizedBox(height: 10),
+                                        const SizedBox(height: 10),
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceEvenly,
@@ -326,13 +432,13 @@ final List<Map<String, String>> bookings = [
                                               onPressed: () {},
                                               style: TextButton.styleFrom(
                                                 backgroundColor:
-                                                    Color(0xFFF3F3FC),
+                                                    const Color(0xFFF3F3FC),
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                 ),
                                               ),
-                                              child: Text(
+                                              child: const Text(
                                                 'View',
                                                 style: TextStyle(
                                                   color: Color(0xFF583EF2),
@@ -344,13 +450,13 @@ final List<Map<String, String>> bookings = [
                                               onPressed: () {},
                                               style: TextButton.styleFrom(
                                                 backgroundColor:
-                                                    Color(0xFFFFEAF0),
+                                                    const Color(0xFFFFEAF0),
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                 ),
                                               ),
-                                              child: Text(
+                                              child: const Text(
                                                 'Book again',
                                                 style: TextStyle(
                                                   color: Color(0xFFF7658B),
@@ -366,7 +472,7 @@ final List<Map<String, String>> bookings = [
                                 );
                               },
                             ),
-                            Center(
+                            const Center(
                               child: Text('No cancelled bookings'),
                             ),
                           ],
