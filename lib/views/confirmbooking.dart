@@ -78,13 +78,13 @@ class ConfirmBookingScreen extends StatelessWidget {
   bool isBookingProcessActive = false;
 
   Future<void> assignBookingToNearestUser(double bookingLat, double bookingLon,
-    Map<String, dynamic> bookingData, BuildContext context) async {
-  if (isBookingProcessActive) {
-    print("Booking process already active, blocking new calls.");
-    return;
-  }
+      Map<String, dynamic> bookingData, BuildContext context) async {
+    if (isBookingProcessActive) {
+      print("Booking process already active, blocking new calls.");
+      return;
+    }
 
-  isBookingProcessActive = true;
+    isBookingProcessActive = true;
     final String? creatorId = FirebaseAuth.instance.currentUser?.uid;
 
     if (creatorId == null) {
@@ -95,86 +95,88 @@ class ConfirmBookingScreen extends StatelessWidget {
     // Add creator_id directly to bookingData
     bookingData['creator_id'] = creatorId;
 
-  try {
-    bool existingBooking = await checkExistingBooking(bookingLat, bookingLon);
+    try {
+      bool existingBooking = await checkExistingBooking(bookingLat, bookingLon);
 
-    if (existingBooking) {
-      print("Ongoing booking detected. No new booking will be created.");
-      await _showBookingExistsDialog(context);
+      if (existingBooking) {
+        print("Ongoing booking detected. No new booking will be created.");
+        await _showBookingExistsDialog(context);
+        isBookingProcessActive = false;
+        return; // Ensure no further processing occurs if an ongoing booking exists
+      }
+
+      print("No ongoing booking detected, proceeding to assign new booking.");
+      await _findAndAssignBookingToNearestUser(
+          bookingLat, bookingLon, bookingData, context);
+    } finally {
       isBookingProcessActive = false;
-      return; // Ensure no further processing occurs if an ongoing booking exists
+    }
+  }
+
+  Future<void> _findAndAssignBookingToNearestUser(
+      double bookingLat,
+      double bookingLon,
+      Map<String, dynamic> bookingData,
+      BuildContext context) async {
+    final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
+    DatabaseEvent event = await dbRef.once();
+
+    if (!event.snapshot.exists) {
+      print("No users found in the database.");
+      return;
     }
 
-    print("No ongoing booking detected, proceeding to assign new booking.");
-    await _findAndAssignBookingToNearestUser(
-        bookingLat, bookingLon, bookingData, context);
-  } finally {
-    isBookingProcessActive = false;
-  }
-}
+    Map<dynamic, dynamic> allUsersDynamic =
+        event.snapshot.value as Map<dynamic, dynamic>;
+    Map<String, dynamic> allUsers = Map<String, dynamic>.from(allUsersDynamic);
 
-Future<void> _findAndAssignBookingToNearestUser(
-    double bookingLat,
-    double bookingLon,
-    Map<String, dynamic> bookingData,
-    BuildContext context) async {
-  final DatabaseReference dbRef = FirebaseDatabase.instance.ref();
-  DatabaseEvent event = await dbRef.once();
+    double minDistance = double.infinity;
+    String nearestUserId = '';
 
-  if (!event.snapshot.exists) {
-    print("No users found in the database.");
-    return;
-  }
-
-  Map<dynamic, dynamic> allUsersDynamic =
-      event.snapshot.value as Map<dynamic, dynamic>;
-  Map<String, dynamic> allUsers = Map<String, dynamic>.from(allUsersDynamic);
-
-  double minDistance = double.infinity;
-  String nearestUserId = '';
-
-  allUsers.forEach((userId, userData) {
-    if (userData is Map && userData['user_info'] != null) {
-      Map<dynamic, dynamic> userInfoDynamic =
-          userData['user_info'] as Map<dynamic, dynamic>;
-      userInfoDynamic.forEach((key, userInfoData) {
-        if (userInfoData is Map) {
-          Map<String, dynamic> userInfo =
-              Map<String, dynamic>.from(userInfoData);
-          String? role = userInfo['use_role'] as String?;
-          if (role == 's') {
-            double userLat =
-                double.tryParse(userInfo['latitude'].toString()) ?? 0.0;
-            double userLon =
-                double.tryParse(userInfo['longitude'].toString()) ?? 0.0;
-            double distance =
-                calculateDistance(bookingLat, bookingLon, userLat, userLon);
-            if (distance < minDistance) {
-              minDistance = distance;
-              nearestUserId = userId;
+    allUsers.forEach((userId, userData) {
+      if (userData is Map && userData['user_info'] != null) {
+        Map<dynamic, dynamic> userInfoDynamic =
+            userData['user_info'] as Map<dynamic, dynamic>;
+        userInfoDynamic.forEach((key, userInfoData) {
+          if (userInfoData is Map) {
+            Map<String, dynamic> userInfo =
+                Map<String, dynamic>.from(userInfoData);
+            String? role = userInfo['use_role'] as String?;
+            if (role == 's') {
+              double userLat =
+                  double.tryParse(userInfo['latitude'].toString()) ?? 0.0;
+              double userLon =
+                  double.tryParse(userInfo['longitude'].toString()) ?? 0.0;
+              double distance =
+                  calculateDistance(bookingLat, bookingLon, userLat, userLon);
+              if (distance < minDistance) {
+                minDistance = distance;
+                nearestUserId = userId;
+              }
             }
           }
-        }
-      });
-    }
-  });
-
-  if (nearestUserId.isNotEmpty) {
-    String newBookingKey = dbRef.child('$nearestUserId/bookings').push().key!;
-    await dbRef.child('$nearestUserId/bookings/$newBookingKey').set(bookingData).then((_) {
-      print("Booking successfully assigned to nearest user: $nearestUserId");
-      _showSuccessDialog(context); // Show success dialog only if booking insertion is successful
-    }).catchError((error) {
-      print("Failed to assign booking: $error");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to assign booking. Please try again."))
-      );
+        });
+      }
     });
-  } else {
-    print("No suitable user found to assign the booking.");
-  }
-}
 
+    if (nearestUserId.isNotEmpty) {
+      String newBookingKey = dbRef.child('$nearestUserId/bookings').push().key!;
+      await dbRef
+          .child('$nearestUserId/bookings/$newBookingKey')
+          .set(bookingData)
+          .then((_) {
+        print("Booking successfully assigned to nearest user: $nearestUserId");
+        _showSuccessDialog(
+            context); // Show success dialog only if booking insertion is successful
+      }).catchError((error) {
+        print("Failed to assign booking: $error");
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Failed to assign booking. Please try again.")));
+      });
+    } else {
+      print("No suitable user found to assign the booking.");
+    }
+  }
 
   Future<void> _showBookingExistsDialog(BuildContext context) async {
     showDialog(
@@ -208,6 +210,8 @@ Future<void> _findAndAssignBookingToNearestUser(
     final String note = args['Note'];
     final String package = args['Package'];
     final int washroomcount = args['WashroomCount'];
+    final int? noOfMonths = args['months'];
+    final int? noOfUses = args['uses'];
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -287,7 +291,8 @@ Future<void> _findAndAssignBookingToNearestUser(
                 ),
               ),
               const SizedBox(height: 20),
-              _buildBottomBar(context, startDate, price, package),
+              _buildBottomBar(context, startDate, price, package, washroomcount,
+                  noOfMonths, noOfUses),
             ],
           ),
         ),
@@ -357,7 +362,8 @@ Future<void> _findAndAssignBookingToNearestUser(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 14, color: Color(0xFF77779D))),
+          Text(label,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF77779D))),
           Text(amount,
               style: const TextStyle(
                   fontSize: 14,
@@ -368,8 +374,8 @@ Future<void> _findAndAssignBookingToNearestUser(
     );
   }
 
-  Widget _buildBottomBar(
-      BuildContext context, String startDate, String price, String package) {
+  Widget _buildBottomBar(BuildContext context, String startDate, String price,
+      String package, int wahroomCount, int? noOfMonths, int? noOfUses) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -416,7 +422,10 @@ Future<void> _findAndAssignBookingToNearestUser(
                           "time": startDate,
                           "price": price,
                           "package": package,
-                          "booking_status": "o"
+                          "booking_status": "o",
+                          "months": noOfMonths,
+                          "washroomCount": wahroomCount,
+                          "uses": noOfUses
                           // Add any other necessary booking details here
                         };
 
@@ -429,7 +438,8 @@ Future<void> _findAndAssignBookingToNearestUser(
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF583EF2),
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),

@@ -45,6 +45,9 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
     super.initState();
     _initializeUserAndDatabase();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() {}); // Rebuild the widget when the tab changes
+    });
     Future.microtask(() {
       ref
           .read(textFieldProvider.notifier)
@@ -462,105 +465,113 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
 
               _databaseRef == null
                   ? const Center(child: CircularProgressIndicator())
-                  : StreamBuilder(
-                      stream: _databaseRef!.onValue,
-                      builder:
-                          (context, AsyncSnapshot<DatabaseEvent> snapshot) {
-                        if (snapshot.hasData) {
-                          // Fetch the data from Firebase
-                          Map<dynamic, dynamic>? data = snapshot
-                              .data!.snapshot.value as Map<dynamic, dynamic>?;
-                          int loCount = data != null ? data.length : 0;
+                  : Consumer(
+                      builder: (context, ref, child) {
+                        ref.watch(addressProvider);
+                        return StreamBuilder(
+                          stream: _databaseRef!.onValue,
+                          builder:
+                              (context, AsyncSnapshot<DatabaseEvent> snapshot) {
+                            if (snapshot.hasData) {
+                              // Fetch the data from Firebase
+                              Map<dynamic, dynamic>? data = snapshot.data!
+                                  .snapshot.value as Map<dynamic, dynamic>?;
+                              int loCount = data != null ? data.length : 0;
 
-                          if (loCount == 0) {
-                            return const Center(
-                                child: Text('No addresses available.'));
-                          }
-                          List<dynamic> addresses = data!.values.toList();
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              child: Row(
-                                children: List.generate(
-                                  loCount, // Number of containers based on Firebase data length
-                                  (index) => GestureDetector(
-                                    onTap: () {
-                                      ref
-                                          .read(addressProvider.notifier)
-                                          .updateState(
-                                              address: addresses[index]
-                                                  ['address'],
-                                              selectedIndex: index,
-                                              lat: addresses[index]['latitude'],
-                                              long: addresses[index]
-                                                  ['longitude']);
-                                    },
-                                    child: Container(
-                                      margin: const EdgeInsets.symmetric(
-                                          horizontal: 5),
-                                      width: screenWidth * 0.25,
-                                      height: screenHeight * 0.15,
-                                      padding: const EdgeInsets.all(16.0),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(2),
-                                          topRight: Radius.circular(20),
-                                          bottomLeft: Radius.circular(20),
-                                          bottomRight: Radius.circular(20),
-                                        ),
-                                        border: Border.all(
-                                          color: const Color(0xff6E6BE8),
-                                          width: ref
-                                                      .read(addressProvider)
-                                                      .selectedIndex ==
-                                                  index
-                                              ? 4
-                                              : 2,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Flexible(
-                                            child: SizedBox(
-                                              height: 50,
-                                              child: Image.asset(
-                                                'assets/images/Home.png',
-                                                fit: BoxFit.contain,
-                                              ),
+                              if (loCount == 0) {
+                                return const Center(
+                                    child: Text('No addresses available.'));
+                              }
+                              List<dynamic> addresses = data!.values.toList();
+                              return SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  child: Row(
+                                    children: List.generate(
+                                      loCount, // Number of containers based on Firebase data length
+                                      (index) => GestureDetector(
+                                        onTap: () {
+                                          ref
+                                              .read(addressProvider.notifier)
+                                              .updateState(
+                                                  address: addresses[index]
+                                                      ['address'],
+                                                  selectedIndex: index,
+                                                  lat: addresses[index]
+                                                      ['latitude'],
+                                                  long: addresses[index]
+                                                      ['longitude']);
+                                        },
+                                        child: Container(
+                                          margin: const EdgeInsets.symmetric(
+                                              horizontal: 5),
+                                          width: screenWidth * 0.25,
+                                          height: screenHeight * 0.15,
+                                          padding: const EdgeInsets.all(16.0),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                              topLeft: Radius.circular(2),
+                                              topRight: Radius.circular(20),
+                                              bottomLeft: Radius.circular(20),
+                                              bottomRight: Radius.circular(20),
+                                            ),
+                                            border: Border.all(
+                                              color: const Color(0xff6E6BE8),
+                                              width: ref
+                                                          .read(addressProvider)
+                                                          .selectedIndex ==
+                                                      index
+                                                  ? 4
+                                                  : 2,
                                             ),
                                           ),
-                                          const SizedBox(height: 16),
-                                          Flexible(
-                                            child: Text(
-                                              'House ${index + 1}',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Color(0xff6E6BE8),
-                                                fontWeight: FontWeight.bold,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Flexible(
+                                                child: SizedBox(
+                                                  height: 50,
+                                                  child: Image.asset(
+                                                    'assets/images/Home.png',
+                                                    fit: BoxFit.contain,
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                          )
-                                        ],
+                                              const SizedBox(height: 16),
+                                              Flexible(
+                                                child: Text(
+                                                  'House ${index + 1}',
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    color: Color(0xff6E6BE8),
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          );
-                        } else if (snapshot.hasError) {
-                          return Center(
-                              child: Text('Error: ${snapshot.error}'));
-                        } else {
-                          return Center(
-                              child: Container(
-                            height: screenHeight * 0.15,
-                          ));
-                        }
+                              );
+                            } else if (snapshot.hasError) {
+                              return Center(
+                                  child: Text('Error: ${snapshot.error}'));
+                            } else {
+                              return Center(
+                                  child: Container(
+                                height: screenHeight * 0.15,
+                              ));
+                            }
+                          },
+                        );
                       },
                     ),
               const SizedBox(height: 16),
@@ -1021,7 +1032,10 @@ class _SelectPackageState extends ConsumerState<SelectPackage>
                     'Note': _noteController.text.trim(),
                     'Package':
                         _tabController.index == 1 ? 'Monthly' : 'Instant',
-                    'WashroomCount': washroomcount
+                    'WashroomCount': washroomcount,
+                    'months':
+                        _tabController.index == 1 ? _selectedMonthIndex : null,
+                    'uses': _tabController.index == 1 ? _selectedUseIndex : null
                   });
                 },
                 style: ElevatedButton.styleFrom(

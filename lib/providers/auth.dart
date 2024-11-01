@@ -73,7 +73,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         if (value.user != null) {
           print("user is not null");
           var user = auth.currentUser!;
-          authState.checkmobileno(ref, mobileno: phoneNumber);
+          authState.checkmobileno(ref, context, mobileno: phoneNumber);
           user.getIdToken().then((ftoken) async {
             await prefs.setString('firebaseToken', ftoken!);
           });
@@ -199,7 +199,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<int> checkmobileno(
-    WidgetRef ref, {
+    WidgetRef ref,
+    BuildContext context, {
     required String mobileno,
   }) async {
     print("Login API call started for user: $mobileno");
@@ -306,7 +307,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           print(
               "state updated with new token data: ${state.data?.accessToken}");
           loader.state = false;
-
+          Navigator.of(context).pushNamed('/home');
           break;
 
         default:

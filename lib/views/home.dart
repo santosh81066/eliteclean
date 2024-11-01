@@ -32,38 +32,39 @@ class _HomeState extends ConsumerState<Home> {
       ref.read(addressProvider.notifier).getCurrentLocation();
     });
   }
-Stream<List<Map<String, dynamic>>> getOngoingBookingsStream(String userId) {
-  final dbRef = FirebaseDatabase.instance.ref();
-  return dbRef.onValue.map((event) {
-    List<Map<String, dynamic>> bookings = [];
 
-    if (event.snapshot.value != null) {
-      Map<dynamic, dynamic> allUsersData = event.snapshot.value as Map;
+  Stream<List<Map<String, dynamic>>> getOngoingBookingsStream(String userId) {
+    final dbRef = FirebaseDatabase.instance.ref();
+    return dbRef.onValue.map((event) {
+      List<Map<String, dynamic>> bookings = [];
 
-      // Iterate over all users' bookings to find those created by the logged-in user
-      allUsersData.forEach((userIdKey, userData) {
-        if (userData is Map && userData['bookings'] != null) {
-          Map<dynamic, dynamic> bookingsData = userData['bookings'] as Map;
+      if (event.snapshot.value != null) {
+        Map<dynamic, dynamic> allUsersData = event.snapshot.value as Map;
 
-          bookingsData.forEach((bookingId, bookingInfo) {
-            if (bookingInfo is Map && bookingInfo['booking_status'] == 'o' &&
-                bookingInfo['creator_id'] == userId) {
-              bookings.add({
-                'address': bookingInfo['address'],
-                'time': bookingInfo['time'],
-                'price': bookingInfo['price'],
-                'package': bookingInfo['package'],
-                
-              });
-            }
-          });
-        }
-      });
-    }
+        // Iterate over all users' bookings to find those created by the logged-in user
+        allUsersData.forEach((userIdKey, userData) {
+          if (userData is Map && userData['bookings'] != null) {
+            Map<dynamic, dynamic> bookingsData = userData['bookings'] as Map;
 
-    return bookings;
-  });
-}
+            bookingsData.forEach((bookingId, bookingInfo) {
+              if (bookingInfo is Map &&
+                  bookingInfo['booking_status'] == 'o' &&
+                  bookingInfo['creator_id'] == userId) {
+                bookings.add({
+                  'address': bookingInfo['address'],
+                  'time': bookingInfo['time'],
+                  'price': bookingInfo['price'],
+                  'package': bookingInfo['package'],
+                });
+              }
+            });
+          }
+        });
+      }
+
+      return bookings;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -134,139 +135,149 @@ Stream<List<Map<String, dynamic>>> getOngoingBookingsStream(String userId) {
                             color: const Color(0xFFF5F5F5),
                             borderRadius: BorderRadius.circular(25),
                           ),
-                          child: Consumer(builder: (context, ref, child) {
-                             final String userId = FirebaseAuth.instance.currentUser!.uid;
-                            return Column(
-                              children: [
-                                const Text(
-                                  'Your bookings appear here',
-                                  style: TextStyle(
-                                    color: Color(0xFF808080),
-                                    fontSize: 14,
-                                    fontFamily: 'Inter',
-                                    fontWeight: FontWeight.w400,
+                          child: Consumer(
+                            builder: (context, ref, child) {
+                              final String userId =
+                                  FirebaseAuth.instance.currentUser!.uid;
+                              return Column(
+                                children: [
+                                  const Text(
+                                    'Your bookings appear here',
+                                    style: TextStyle(
+                                      color: Color(0xFF808080),
+                                      fontSize: 14,
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.w400,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 10),
-                               StreamBuilder<List<Map<String, dynamic>>>(
-  stream: getOngoingBookingsStream(userId),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return CircularProgressIndicator();
-    } else if (snapshot.hasError) {
-      return Text("Error: ${snapshot.error}");
-    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-      return Column(
-        children: [
-          Image.asset(
-            'assets/images/emptyservice.png', // Replace with your image asset path
-            height: 80,
-            width: 80,
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'No package subscribes yet...',
-            style: TextStyle(
-              color: Color(0xFF808080),
-              fontSize: 12,
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      );
-    } else {
-      List<Map<String, dynamic>> bookings = snapshot.data!;
-      return SizedBox(
-        height: 200,
-        child: PageView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: bookings.length,
-          itemBuilder: (context, index) {
-            var booking = bookings[index];
-            return Center(
-              child: Container(
-                width: screenWidth * 0.8, // Adjust width as needed
-                padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, // Left align text
-                  mainAxisAlignment: MainAxisAlignment.center, // Center details vertically
-                  children: [
-                    Text(
-                      "Address: ${booking['address']}",
-                      style: const TextStyle(
-                        color: Color(0xFF1E116B),
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      "Time: ${booking['time']}",
-                      style: const TextStyle(
-                        color: Color(0xFF38385E),
-                        fontSize: 12,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      "Price: ${booking['price']}",
-                      style: const TextStyle(
-                        color: Color(0xFF38385E),
-                        fontSize: 12,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      "Package: ${booking['package']}",
-                      style: const TextStyle(
-                        color: Color(0xFF38385E),
-                        fontSize: 12,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      );
-    }
-  },
-),
-
-                                const SizedBox(height: 10),
-                                const Text(
-                                  'No package subscribes yet...',
-                                  style: TextStyle(
-                                    color: Color(0xFF808080),
-                                    fontSize: 12,
-                                    fontFamily: 'Inter',
-                                    fontWeight: FontWeight.w500,
+                                  const SizedBox(height: 10),
+                                  StreamBuilder<List<Map<String, dynamic>>>(
+                                    stream: getOngoingBookingsStream(userId),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return CircularProgressIndicator();
+                                      } else if (snapshot.hasError) {
+                                        return Text("Error: ${snapshot.error}");
+                                      } else if (!snapshot.hasData ||
+                                          snapshot.data!.isEmpty) {
+                                        return Column(
+                                          children: [
+                                            Image.asset(
+                                              'assets/images/emptyservice.png', // Replace with your image asset path
+                                              height: 80,
+                                              width: 80,
+                                            ),
+                                            const SizedBox(height: 10),
+                                            const Text(
+                                              'No package subscribes yet...',
+                                              style: TextStyle(
+                                                color: Color(0xFF808080),
+                                                fontSize: 12,
+                                                fontFamily: 'Inter',
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      } else {
+                                        List<Map<String, dynamic>> bookings =
+                                            snapshot.data!;
+                                        return SizedBox(
+                                          height: 200,
+                                          child: PageView.builder(
+                                            scrollDirection: Axis.horizontal,
+                                            itemCount: bookings.length,
+                                            itemBuilder: (context, index) {
+                                              var booking = bookings[index];
+                                              return Center(
+                                                child: Container(
+                                                  width: screenWidth *
+                                                      0.8, // Adjust width as needed
+                                                  padding:
+                                                      const EdgeInsets.all(15),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            15),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors.grey
+                                                            .withOpacity(0.3),
+                                                        blurRadius: 10,
+                                                        offset: Offset(0, 3),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start, // Left align text
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center, // Center details vertically
+                                                    children: [
+                                                      Text(
+                                                        "Address: ${booking['address']}",
+                                                        style: const TextStyle(
+                                                          color:
+                                                              Color(0xFF1E116B),
+                                                          fontSize: 14,
+                                                          fontFamily: 'Poppins',
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 5),
+                                                      Text(
+                                                        "Time: ${booking['time']}",
+                                                        style: const TextStyle(
+                                                          color:
+                                                              Color(0xFF38385E),
+                                                          fontSize: 12,
+                                                          fontFamily: 'Inter',
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 5),
+                                                      Text(
+                                                        "Price: ${booking['price']}",
+                                                        style: const TextStyle(
+                                                          color:
+                                                              Color(0xFF38385E),
+                                                          fontSize: 12,
+                                                          fontFamily: 'Inter',
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 5),
+                                                      Text(
+                                                        "Package: ${booking['package']}",
+                                                        style: const TextStyle(
+                                                          color:
+                                                              Color(0xFF38385E),
+                                                          fontSize: 12,
+                                                          fontFamily: 'Inter',
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      }
+                                    },
                                   ),
-                                ),
-                              ],
-                            );
-                          },
-                          
+                                ],
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(height: 30),
